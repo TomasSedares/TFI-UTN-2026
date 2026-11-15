@@ -10,28 +10,65 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 1em;
   cursor: pointer;
   overflow: hidden;
+}
+
+.contenedor-imagen {
+  overflow: hidden;
+  background: var(--app-border-soft);
 
   .img-vehiculo {
+    display: block;
     width: 100%;
-    aspect-ratio: 16/9;
-    object-fit: cover;
+    aspect-ratio: 3 / 2;
+    object-fit: contain;
+    transition: transform 0.3s ease-in-out;
   }
 }
 
 .vehiculo-card:hover .img-vehiculo {
   transform: scale(1.05);
-  transition: transform 0.3s ease-in-out;
 }
 
-.vehiculo-card-footer {
-  position: absolute;
-  bottom: 0%;
+.contenido {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-evenly;
-  width: 100%;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 20px 20px;
+
+  .titulo {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+  }
+
+  .precio {
+    margin: 0;
+    color: var(--mat-sys-on-surface);
+    font-size: 1.9rem;
+    font-weight: 600;
+  }
+
+  .caracteristicas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin-top: auto;
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 0.95rem;
+
+    span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    mat-icon {
+      width: 16px;
+      height: 16px;
+      font-size: 16px;
+    }
+  }
 }

@@ -1,14 +1,16 @@
 @if(vehiculo(); as v){
 <mat-card class="vehiculo-card" appearance="outlined" (click)="irDetalle.emit(v.id)">
-    <img class="img-vehiculo" mat-card-image [src]="v.imagenPrincipalUrl" [alt]="v.modeloNombre" width="100%">
-    <mat-card-content>
-        <mat-card-title>{{v.modeloNombre}} {{v.anio}}</mat-card-title>
-        <mat-card-subtitle>{{ v.precioVenta| currency:'ARS':'symbol':'1.0-0' }}</mat-card-subtitle>
+    <div class="contenedor-imagen">
+        <img class="img-vehiculo" [src]="v.imagenPrincipalUrl" [alt]="v.modeloNombre">
+    </div>
+    <mat-card-content class="contenido">
+        <h3 class="titulo">{{v.modeloNombre}} {{v.anio}}</h3>
+        <p class="precio">$ {{ formatearNumero(v.precioVenta) }}</p>
+        <div class="caracteristicas">
+            <span><mat-icon>speed</mat-icon>{{ formatearNumero(v.kilometraje) }} km</span>
+            <span><mat-icon>local_gas_station</mat-icon>{{ etiquetaCombustible[v.tipoCombustible] }}</span>
+            <span><mat-icon>settings</mat-icon>{{ etiquetaTransmision[v.tipoTransmision] }}</span>
+        </div>
     </mat-card-content>
-    <mat-card-footer class="vehiculo-card-footer">
-        <p>{{v.kilometraje}}km</p>
-        <p>{{v.tipoCombustible}}</p>
-        <p>{{v.tipoTransmision}}</p>
-    </mat-card-footer>
 </mat-card>
 }

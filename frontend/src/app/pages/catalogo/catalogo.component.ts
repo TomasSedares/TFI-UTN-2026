@@ -1,5 +1,4 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { MatGridListModule } from '@angular/material/grid-list';
 import { VehiculoService } from '../../services/vehiculo-service.service';
 import { FiltrosVehiculo, Pagina, Vehiculo } from '../../models/Vehiculo';
 import { VehiculoCardComponent } from '../../components/vehiculo-card/vehiculo-card.component';
@@ -10,7 +9,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 
 @Component({
-  imports: [MatGridListModule, VehiculoCardComponent, MatIconModule, FiltrosComponent, MatPaginatorModule],
+  imports: [VehiculoCardComponent, MatIconModule, FiltrosComponent, MatPaginatorModule],
   selector: 'app-catalogo',
   styleUrl: './catalogo.component.scss',
   templateUrl: './catalogo.component.html',

@@ -75,8 +75,10 @@
         }
     }
 
-    mat-grid-list {
-        grid-area: cards;
+    .grilla-vehiculos {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
         width: 100%;
     }
 }
