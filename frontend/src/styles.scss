@@ -435,3 +435,15 @@ mat-paginator.mat-mdc-paginator {
   margin: 0;
   color: var(--mat-sys-error);
 }
+
+.date-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+
+  mat-form-field {
+    width: 10rem;
+  }
+}
