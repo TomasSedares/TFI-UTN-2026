@@ -43,9 +43,16 @@
         <ng-container matColumnDef="activo">
             <th mat-header-cell *matHeaderCellDef> Activo </th>
             <td mat-cell *matCellDef="let usuario">
-                <span class="badge" [class.badge--activo]="usuario.activo" [class.badge--baja]="!usuario.activo">
-                    {{usuario.activo ? 'Sí' : 'No'}}
-                </span>  
+                <mat-select
+                    class="estado-select"
+                    [value]="usuario.activo"
+                    [disabled]="esUsuarioActual(usuario) || guardando().has(usuario.id)"
+                    (selectionChange)="cambiarEstado(usuario, $event.value)"
+                    aria-label="Estado del usuario">
+                    @for (estado of estados; track estado) {
+                        <mat-option [value]="estado">{{ estado ? 'Sí' : 'No' }}</mat-option>
+                    }
+                </mat-select>  
             </td>
         </ng-container>
         <ng-container matColumnDef="alta">

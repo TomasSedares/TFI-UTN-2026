@@ -1,6 +1,5 @@
 package utn.programacion3.agencia_de_autos.service;
 
-
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,19 +17,21 @@ import utn.programacion3.agencia_de_autos.model.Usuario;
 import utn.programacion3.agencia_de_autos.model.enums.Rol;
 import utn.programacion3.agencia_de_autos.repository.UsuarioRepository;
 import org.springframework.security.access.AccessDeniedException;
+import utn.programacion3.agencia_de_autos.exception.NegocioException;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class UsuarioServiceImpl implements UsuarioService{
+public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioMapper usuarioMapper;
     private final PasswordEncoder passwordEncoder;
 
     // Inyección por constructor (Buenas prácticas de Spring)
-    public UsuarioServiceImpl(UsuarioRepository usuarioRepository, UsuarioMapper usuarioMapper, PasswordEncoder passwordEncoder) {
+    public UsuarioServiceImpl(UsuarioRepository usuarioRepository, UsuarioMapper usuarioMapper,
+            PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioMapper = usuarioMapper;
         this.passwordEncoder = passwordEncoder;
@@ -138,14 +139,16 @@ public class UsuarioServiceImpl implements UsuarioService{
         usuarioActual.setNombre(requestDTO.getNombre());
         usuarioActual.setApellido(requestDTO.getApellido());
         usuarioActual.setEmail(requestDTO.getEmail());
-        // El rol no se modifica desde el perfil: nunca se toca requestDTO sobre rolUsuario
+        // El rol no se modifica desde el perfil: nunca se toca requestDTO sobre
+        // rolUsuario
         aplicarCambioPassword(usuarioActual, requestDTO.getPassword());
 
         Usuario usuarioActualizado = usuarioRepository.save(usuarioActual);
         return usuarioMapper.toResponseDTO(usuarioActualizado);
     }
 
-    // Aplica la nueva contraseña (encriptada) solo si viene informada; evita repetir la actual
+    // Aplica la nueva contraseña (encriptada) solo si viene informada; evita
+    // repetir la actual
     private void aplicarCambioPassword(Usuario usuario, String passwordNueva) {
         if (passwordNueva == null || passwordNueva.isBlank()) {
             return;
@@ -159,23 +162,30 @@ public class UsuarioServiceImpl implements UsuarioService{
         usuario.setPassword(passwordEncoder.encode(passwordLimpia));
     }
 
-    // Recupera la entidad del usuario autenticado a partir del email del JWT (SecurityContext)
+    // Recupera la entidad del usuario autenticado a partir del email del JWT
+    // (SecurityContext)
     private Usuario obtenerUsuarioAutenticado() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String emailLogueado = authentication.getName();
         return usuarioRepository.findByEmail(emailLogueado)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario autenticado no encontrado: " + emailLogueado));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Usuario autenticado no encontrado: " + emailLogueado));
     }
 
     @Override
     @Transactional
-    public UsuarioResponseDTO darDeBaja(Long id) {
+    public UsuarioResponseDTO cambiarEstado(Long id, Boolean activo) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con el ID: " + id));
 
-        usuario.setActivo(false);
-        usuarioRepository.save(usuario);
+        // Un administrador no puede desactivar su propia cuenta
+        Usuario usuarioLogueado = obtenerUsuarioAutenticado();
+        if (!activo && usuarioLogueado.getId().equals(id)) {
+            throw new NegocioException("No podés desactivar tu propia cuenta.");
+        }
 
+        usuario.setActivo(activo);
+        usuarioRepository.save(usuario);
         return usuarioMapper.toResponseDTO(usuario);
     }
 
@@ -213,14 +223,16 @@ public class UsuarioServiceImpl implements UsuarioService{
     }
 
     @Override
-    public void esPropioOAdmin(Usuario usuarioExistente){
+    public void esPropioOAdmin(Usuario usuarioExistente) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String emailLogueado = authentication.getName();
 
-        // Valida Seguridad: No es el propio usuario O el usuario logeado es ADMINISTRADOR
+        // Valida Seguridad: No es el propio usuario O el usuario logeado es
+        // ADMINISTRADOR
         boolean esElMismoUsuario = usuarioExistente.getEmail().equals(emailLogueado);
-        boolean esAdministrador = authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"));
+        boolean esAdministrador = authentication.getAuthorities()
+                .contains(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"));
 
         if (!esElMismoUsuario && !esAdministrador) {
             throw new AccessDeniedException("No tienes permisos para modificar este usuario.");

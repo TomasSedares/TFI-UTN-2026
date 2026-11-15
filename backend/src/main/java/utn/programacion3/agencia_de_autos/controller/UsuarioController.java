@@ -15,6 +15,8 @@ import utn.programacion3.agencia_de_autos.dto.request.UsuarioRequestDTO;
 import utn.programacion3.agencia_de_autos.dto.request.CambiarRolRequestDTO;
 import utn.programacion3.agencia_de_autos.dto.response.UsuarioResponseDTO;
 import utn.programacion3.agencia_de_autos.service.UsuarioService;
+import utn.programacion3.agencia_de_autos.dto.request.CambiarEstadoRequestDTO;
+
 
 import java.util.List;
 
@@ -89,19 +91,7 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioService.actualizarUsuario(id, requestDTO));
     }
 
-    @Operation(
-            summary = "Dar de baja lógica a un usuario",
-            description = "Cambia de forma parcial el estado del usuario a inactivo (activo = false) sin eliminarlo físicamente de la base de datos."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Estado del usuario modificado exitosamente"),
-            @ApiResponse(responseCode = "404", description = "No se encontro ningún usuario con el ID provisto")
-    })
-    @PatchMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<UsuarioResponseDTO> cambiarEstado(@PathVariable Long id) {
-        return ResponseEntity.ok(usuarioService.darDeBaja(id));
-    }
+
     @PatchMapping ("/{id}/rol")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<UsuarioResponseDTO> cambiarRol(
@@ -139,5 +129,22 @@ public class UsuarioController {
 
         return ResponseEntity.ok(usuario);
 
+    }
+    @PatchMapping("/{id}/estado")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @Operation(
+            summary = "Cambiar el estado activo de un usuario",
+            description = "Permite al Administrador activar o desactivar un usuario mediante su ID. El estado activo se representa con un booleano."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Estado del usuario modificado exitosamente"),
+            @ApiResponse(responseCode = "404", description = "No se encontró ningún usuario con el ID provisto"),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado (Se requiere rol ADMIN)")
+    })
+    public ResponseEntity<UsuarioResponseDTO> cambiarEstado(
+        @PathVariable Long id,
+        @Valid @RequestBody CambiarEstadoRequestDTO dto
+    ) {
+        return ResponseEntity.ok(usuarioService.cambiarEstado(id, dto.getActivo()));
     }
 }
