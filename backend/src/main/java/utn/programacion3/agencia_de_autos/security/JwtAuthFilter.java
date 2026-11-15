@@ -60,7 +60,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
             //SI EL TOKEN ES VÁLIDO EN TODAS SUS REGLAS
-            if (jwtService.esTokenValido(jwt, userDetails)) {
+            if (userDetails.isEnabled() && jwtService.esTokenValido(jwt, userDetails)) {
 
                 // Creamos el objeto de autenticación que Spring Security entiende
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(

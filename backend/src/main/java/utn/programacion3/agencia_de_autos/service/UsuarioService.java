@@ -30,11 +30,12 @@ public interface UsuarioService {
 
     UsuarioResponseDTO actualizarPerfilActual(PerfilUpdateDTO requestDTO);
 
-    UsuarioResponseDTO darDeBaja(Long id);
 
     UsuarioResponseDTO cambiarRol(Long id, Rol nuevoRol);
 
     UsuarioResponseDTO registrarVendedor(UsuarioRequestDTO registroDto);
+
+    UsuarioResponseDTO cambiarEstado(Long id, Boolean activo);
 
     void esPropioOAdmin(Usuario usuarioExistente);
 }

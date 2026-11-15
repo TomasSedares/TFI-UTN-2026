@@ -29,8 +29,8 @@ export class UsuarioService {
     return this.http.put<Usuario>(`${this.apiUrl}/${id}`, usuario);
   }
 
-  darDeBaja(id: number): Observable<Usuario> {
-    return this.http.patch<Usuario>(`${this.apiUrl}/${id}`, null);
+  cambiarEstado(id: number, activo: boolean): Observable<Usuario> {
+    return this.http.patch<Usuario>(`${this.apiUrl}/${id}/estado`, { activo });
   }
 
   crearVendedor(usuario: UsuarioRequest): Observable<Usuario> {

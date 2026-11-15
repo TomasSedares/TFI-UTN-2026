@@ -20,6 +20,7 @@ export class UsuariosComponent {
 
   readonly columnas = ['id', 'nombre', 'apellido', 'email', 'rolUsuario', 'activo', 'alta'];
   readonly roles = Object.values(ROL);
+  readonly estados = [true, false];
 
   
   readonly usuarios = signal<Usuario[] | null | undefined>(undefined);
@@ -68,6 +69,31 @@ export class UsuariosComponent {
       if (activo) copia.add(id);
       else copia.delete(id);
       return copia;
+    });
+  }
+
+  cambiarEstado(usuario: Usuario, nuevoEstado: boolean): void {
+    if (nuevoEstado === usuario.activo) return;
+    this.marcarGuardando(usuario.id, true);
+    this.usuario_service.cambiarEstado(usuario.id, nuevoEstado).subscribe({
+      next: (actualizado) => {
+        this.usuarios.update((lista) =>
+          lista?.map((u) => (u.id === actualizado.id ? actualizado : u)) ?? lista,
+        );
+        this.marcarGuardando(usuario.id, false);
+        this.snackBar.open(`${usuario.nombre} ${nuevoEstado ? 'activado' : 'desactivado'}`, 'Cerrar', {
+          duration: 3000,
+          panelClass: 'snack-success',
+        });
+      },
+      error: (err) => {
+        this.usuarios.update((lista) => (lista?.map((u) => (u.id === usuario.id ? usuario : u))) ?? lista);
+        this.marcarGuardando(usuario.id, false);
+        this.snackBar.open(err.error?.message ?? 'No se pudo cambiar el estado', 'Cerrar', {
+          duration: 4000,
+          panelClass: 'snack-error',
+        });
+      },
     });
   }
 }
