@@ -13,6 +13,10 @@ export class UsuarioService {
     return this.http.get<Usuario[]>(this.apiUrl);
   }
 
+  getVendedores(): Observable<Usuario[]> {
+    return this.http.get<Usuario[]>(`${this.apiUrl}/vendedores`);
+  }
+
   getMe(): Observable<Usuario> {
     return this.http.get<Usuario>(`${this.apiUrl}/me`);
   }

@@ -89,3 +89,11 @@ export interface BalanceTransacciones {
     fecha_desde: string;
     fecha_hasta: string;
 }
+
+export interface ComisionVendedor {
+    id: number;
+    comision_total: number;
+    vendedor_id: number;
+    nombre_completo: string;
+    email: string;
+}
