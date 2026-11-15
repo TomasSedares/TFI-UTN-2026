@@ -2,6 +2,10 @@ import { Routes } from '@angular/router';
 import { FormClientComponent } from './pages/form-client/form-client.component';
 import { ListClientComponent } from './pages/list-client/list-client.component';
 import { CarDetailsComponent } from './pages/car-details/car-details.component';
+import { ROL } from './models/Usuario';
+import { roleGuard } from './guards/role.guard';
+import { authGuard } from './guards/auth.guard';
+import { guestGuard } from './guards/guest.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'catalogo', pathMatch: 'full' },
@@ -19,16 +23,21 @@ export const routes: Routes = [
   },
   {
     path: 'login',
+    canActivate: [guestGuard],
     loadComponent: () =>
       import('./pages/login/login.component').then((m) => m.LoginComponent),
   },
   {
     path: 'registro',
+    canActivate: [guestGuard],
     loadComponent: () =>
       import('./pages/registro/registro.component').then((m) => m.RegistroComponent),
   },
   {
     path: 'menu',
+    canMatch: [authGuard],
+    canActivate: [roleGuard],
+    data: {roles: [ROL.ADMINISTRADOR, ROL.VENDEDOR]},
     loadChildren: () =>
       import('./pages/menu/menu.routes').then((m) => m.routes),
   },

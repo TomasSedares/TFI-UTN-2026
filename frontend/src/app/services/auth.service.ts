@@ -18,9 +18,12 @@ export class AuthService {
 
   private readonly _token = signal<string | null>(this.readToken());
   readonly token = this._token.asReadonly();
-  readonly isLoggedIn = computed(() => this._token() !== null);
+  readonly isLoggedIn = computed(() => {
+    const claims = this.decodeToken(this._token());
+    return !!claims && claims.exp * 1000 > Date.now();
+  });
 
-  
+
   readonly rol = computed<ROL | null>(() => {
     const claimRol = this.decodeToken(this._token())?.role?.replace('ROLE_', '');
     return (Object.values(ROL) as string[]).includes(claimRol ?? '') ? (claimRol as ROL) : null;
@@ -31,6 +34,11 @@ export class AuthService {
   readonly isAdmin = computed(() => this.rol() === ROL.ADMINISTRADOR);
 
   readonly isVendedor = computed(() => this.rol() === ROL.VENDEDOR);
+
+  constructor() {
+  if (this._token() && !this.isLoggedIn()) this.logout();
+ }
+
 
   login(request: LoginRequest) {
     return this.authApi.login(request).pipe(
@@ -48,7 +56,7 @@ export class AuthService {
   logout() {
     try {
       localStorage.removeItem(TOKEN_KEY);
-    } catch {}
+    } catch { }
     this._token.set(null);
   }
 
@@ -80,6 +88,6 @@ export class AuthService {
   private saveToken(token: string) {
     try {
       localStorage.setItem(TOKEN_KEY, token);
-    } catch {}
+    } catch { }
   }
 }

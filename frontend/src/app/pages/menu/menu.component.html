@@ -23,15 +23,17 @@
         <mat-icon matListItemIcon>category</mat-icon>
         <span matListItemTitle>Modelos</span>
       </a>
-      <a mat-list-item routerLink="/menu/usuarios" routerLinkActive="dashboard-link--active">
-        <mat-icon matListItemIcon>group</mat-icon>
-        <span matListItemTitle>Usuarios</span>
-      </a>
+      @if (auth.rol() === 'ADMINISTRADOR') {
+        <a mat-list-item routerLink="/menu/usuarios" routerLinkActive="dashboard-link--active">
+          <mat-icon matListItemIcon>group</mat-icon>
+          <span matListItemTitle>Usuarios</span>
+        </a>
+      }
       <a mat-list-item routerLink="/menu/transacciones" routerLinkActive="dashboard-link--active">
         <mat-icon matListItemIcon>receipt_long</mat-icon>
         <span matListItemTitle>Transacciones</span>
       </a>
-      <a mat-list-item routerLink="/dashboard/perfil" routerLinkActive="dashboard-link--active">
+      <a mat-list-item routerLink="/menu/perfil" routerLinkActive="dashboard-link--active">
         <mat-icon matListItemIcon>person</mat-icon>
         <span matListItemTitle>Mi perfil</span>
       </a>
