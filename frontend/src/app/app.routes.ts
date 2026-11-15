@@ -41,4 +41,19 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./pages/menu/menu.routes').then((m) => m.routes),
   },
+  {
+    path: 'perfil',
+    canMatch: [authGuard],
+    loadComponent: () =>
+      import('./pages/menu/perfil/perfil.component').then((m) => m.PerfilComponent),
+  },
+  {
+    path: 'tramites',
+    canMatch: [authGuard],
+    canActivate: [roleGuard],
+    data: { roles: [ROL.USUARIO] },
+    loadComponent: () =>
+      import('./pages/tramites/tramites.component').then((m) => m.TramitesComponent),
+  },
+  { path: '**', redirectTo: 'catalogo' },
 ];

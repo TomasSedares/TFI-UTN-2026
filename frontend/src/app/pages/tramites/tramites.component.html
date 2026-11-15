@@ -1,0 +1,61 @@
+<section class="tramites">
+  <header class="tramites__header">
+    <h1 class="tramites__title">Mis trámites</h1>
+    <p class="tramites__subtitle">Seguí el estado de las solicitudes que hiciste en la agencia.</p>
+  </header>
+
+  @if (cargando()) {
+    <div class="tramites__loading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Cargando trámites...</span>
+    </div>
+  } @else if (error()) {
+    <div class="tramites__error" role="alert">
+      <mat-icon fontIcon="error_outline"></mat-icon>
+      <p>{{ error() }}</p>
+      <button mat-stroked-button type="button" (click)="cargar()">Reintentar</button>
+    </div>
+  } @else if (tramites().length === 0) {
+    <div class="tramites__empty">
+      <mat-icon fontIcon="description"></mat-icon>
+      <p>Todavía no hiciste ninguna solicitud.</p>
+      <a mat-flat-button routerLink="/catalogo">Ver catálogo</a>
+    </div>
+  } @else {
+    <ul class="tramites__list">
+      @for (tramite of tramites(); track tramite.id) {
+        <li class="tramites__item">
+          <div class="tramites__item-header">
+            <span class="tramites__item-title">Trámite #{{ tramite.id }}</span>
+            <span class="tramites__estado" [attr.data-estado]="tramite.estadoTransaccion">
+              {{ etiquetaEstado[tramite.estadoTransaccion] }}
+            </span>
+          </div>
+
+          <dl class="tramites__datos">
+            <div>
+              <dt>Vehículo</dt>
+              <dd><a [routerLink]="['/vehiculos', tramite.vehiculo_id]">{{ tramite.patente }}</a></dd>
+            </div>
+            <div>
+              <dt>Visita</dt>
+              <dd>{{ tramite.fecha_visita ? (tramite.fecha_visita | date: 'dd/MM/yyyy HH:mm') : 'A coordinar' }}</dd>
+            </div>
+            <div>
+              <dt>Método de pago</dt>
+              <dd>{{ tramite.metodoPago ? etiquetaMetodoPago[tramite.metodoPago] : '—' }}</dd>
+            </div>
+            <div>
+              <dt>Vendedor</dt>
+              <dd>{{ tramite.vendedor_email ?? 'Sin asignar' }}</dd>
+            </div>
+          </dl>
+
+          @if (tramite.observaciones && tramite.observaciones !== sinObservaciones) {
+            <p class="tramites__observaciones">{{ tramite.observaciones }}</p>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>

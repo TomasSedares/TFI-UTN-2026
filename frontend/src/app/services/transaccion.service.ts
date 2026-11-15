@@ -18,6 +18,10 @@ export class TransaccionService {
     return this.http.get<Pagina<Transaccion>>(TRANSACCIONES_URL, { params });
   }
 
+  misTramites(): Observable<Transaccion[]> {
+    return this.http.get<Transaccion[]>(`${TRANSACCIONES_URL}/mis-tramites`);
+  }
+
   obtenerPorId(id: number): Observable<Transaccion> {
     return this.http.get<Transaccion>(`${TRANSACCIONES_URL}/${id}`);
   }

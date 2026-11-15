@@ -26,6 +26,8 @@ public interface TransaccionRepository extends
 
     boolean existsByClienteEmailAndEstadoTransaccion(String clienteEmail, EstadoTransaccion estadoTransaccion);
 
+    List<Transaccion> findByClienteEmailOrderByIdDesc(String clienteEmail);
+
     List<Transaccion> findByVehiculoIdAndEstadoTransaccionAndIdNot(
             Long vehiculoId,
             EstadoTransaccion estadoTransaccion,

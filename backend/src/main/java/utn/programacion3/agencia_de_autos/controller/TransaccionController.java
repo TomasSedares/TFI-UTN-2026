@@ -60,6 +60,21 @@ public class TransaccionController {
     }
 
     @Operation(
+            summary = "Listar mis trámites",
+            description = "Devuelve las transacciones en las que el usuario autenticado figura como cliente, de la más reciente a la más antigua."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Trámites recuperados de forma exitosa"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado. Se requiere rol USUARIO")
+    })
+    @PreAuthorize("hasRole('USUARIO')")
+    @GetMapping("/mis-tramites")
+    public ResponseEntity<List<TransaccionResponseDTO>> misTramites(Authentication authentication) {
+        return ResponseEntity.ok(transaccionService.listarPorCliente(authentication.getName()));
+    }
+
+    @Operation(
             summary = "Buscar transacción por ID",
             description = "Recupera la información completa y el estado actual de una transacción específica mediante su ID."
     )

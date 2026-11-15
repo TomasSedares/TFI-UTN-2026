@@ -165,6 +165,13 @@ public class TransaccionService {
 
 
     @Transactional(readOnly = true)
+    public List<TransaccionResponseDTO> listarPorCliente(String emailCliente) {
+        return transaccionRepository.findByClienteEmailOrderByIdDesc(emailCliente).stream()
+                .map(transaccionMapper::toResponseDTO)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public TransaccionResponseDTO buscarPorId(Long id) {
         Transaccion transaccion = transaccionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaccion no encontrado con el ID: " + id));
