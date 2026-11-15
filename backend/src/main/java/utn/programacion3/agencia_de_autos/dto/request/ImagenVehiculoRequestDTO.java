@@ -12,8 +12,8 @@ import lombok.*;
 @AllArgsConstructor
 public class ImagenVehiculoRequestDTO {
 
-    @Schema(description = "URL pública de la imagen del vehículo", example = "https://cdn.agencia.com/autos/ford-focus-2022.jpg")
-    @NotBlank(message = "La URL es obligatoria")
+    @Schema(description = "Imagen del vehículo codificada como data URI base64", example = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ...")
+    @NotBlank(message = "La imagen es obligatoria")
     private String url;
 
     @Schema(description = "Identificador único del vehículo al que pertenece la imagen", example = "7", minimum = "1")
