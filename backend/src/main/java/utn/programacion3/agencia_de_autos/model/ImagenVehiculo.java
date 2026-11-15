@@ -16,7 +16,7 @@ public class ImagenVehiculo {
     @Column(name = "id_imagen")
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String url;
 
     // Relación: muchas imágenes pertenecen a un vehículo
