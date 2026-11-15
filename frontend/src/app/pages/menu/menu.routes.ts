@@ -36,6 +36,13 @@ export const routes: Routes = [
           import('./usuarios/usuarios.component').then((m) => m.UsuariosComponent),
       },
       {
+        path: 'comisiones',
+        canActivate: [roleGuard],
+        data: {roles: [ROL.ADMINISTRADOR]},
+        loadComponent: () =>
+          import('./comisiones/comisiones.component').then((m) => m.ComisionesComponent),
+      },
+      {
         path: 'vehiculos',
         loadComponent: () =>
           import('./vehiculos/vehiculos.component').then((m) => m.VehiculosComponent),
