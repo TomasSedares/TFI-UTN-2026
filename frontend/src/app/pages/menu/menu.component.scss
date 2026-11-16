@@ -35,3 +35,35 @@
   background: rgba(201, 168, 76, 0.14);
 }
 
+// Mobile: la sidebar queda como una barra angosta solo de iconos. Al tocar una
+// zona vacía de la barra (fuera de los botones) se despliega por encima del
+// contenido, sin empujarlo. Tocar un botón navega directo, sin desplegar.
+@media (max-width: 768px) {
+  .dashboard-sidebar {
+    width: 56px;
+    height: 100%;
+    padding: 0;
+    overflow-x: hidden;
+    white-space: nowrap;
+    z-index: 5;
+    transition: width 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover:not(:has(a:hover)) {
+      width: 250px;
+      box-shadow: 4px 0 16px rgba(0, 0, 0, 0.25);
+    }
+  }
+
+  // El título "Administración" no se muestra en mobile (movía todo al desplegar).
+  .dashboard-sidebar__heading {
+    display: none;
+  }
+
+  // El contenido siempre reserva solo el ancho de la barra de iconos
+  // (Material le pone un margin-left inline de 250px para el modo "side").
+  .dashboard-content {
+    margin-left: 56px !important;
+    padding: 16px;
+  }
+}
+
