@@ -54,5 +54,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/tramites/tramites.component').then((m) => m.TramitesComponent),
   },
-  { path: '**', redirectTo: 'catalogo' },
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./pages/not-found/not-found.component').then((m) => m.NotFoundComponent),
+  },
 ];
