@@ -47,4 +47,12 @@ export class TramitesComponent {
       },
     });
   }
+
+  nombreVendedor(tramite: Transaccion): string{
+    return tramite.vendedor_nombre ?`${tramite.vendedor_nombre} ${tramite.vendedor_apellido}` : 'Sin asignar';
+  }
+
+  emailVendedor(tramite: Transaccion): string{
+    return tramite.vendedor_email ?`${tramite.vendedor_email}` : 'Sin asignar';
+  }
 }
