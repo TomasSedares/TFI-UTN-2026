@@ -43,6 +43,13 @@ export const routes: Routes = [
           import('./comisiones/comisiones.component').then((m) => m.ComisionesComponent),
       },
       {
+        path: 'historial-transacciones',
+        canActivate: [roleGuard],
+        data: {roles: [ROL.ADMINISTRADOR]},
+        loadComponent: () =>
+          import('./historial-transacciones/historial-transacciones.component').then((m) => m.HistorialTransaccionesComponent),
+      },
+      {
         path: 'vehiculos',
         loadComponent: () =>
           import('./vehiculos/vehiculos.component').then((m) => m.VehiculosComponent),
