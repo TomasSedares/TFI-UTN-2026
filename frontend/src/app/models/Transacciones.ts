@@ -44,10 +44,13 @@ export interface Transaccion {
     metodoPago: MetodoPago | null;
     estadoTransaccion: EstadoTransaccion;
     vehiculo_id: number;
+    modelo: string;
     patente: string;
     cliente_id: number;
     cliente_email: string;
     vendedor_id: number | null;
+    vendedor_nombre: string;
+    vendedor_apellido: string;
     vendedor_email: string | null;
     fecha_visita: string | null;
 }

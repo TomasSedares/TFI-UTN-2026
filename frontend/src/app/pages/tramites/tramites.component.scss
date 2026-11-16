@@ -61,6 +61,8 @@
     border: 1px solid var(--mat-sys-outline-variant);
     border-radius: 0.75rem;
     background: var(--mat-sys-surface-container-low);
+    cursor: pointer;
+    transition: transform 0.3s ease-in-out;
   }
 
   &__item-header {
@@ -112,6 +114,10 @@
       overflow-wrap: anywhere;
     }
   }
+   &__item:hover {
+    border: 1px solid var(--mat-sys-primary);
+    transform: scale(1.05);
+   }
 
   &__observaciones {
     margin: 1rem 0 0;

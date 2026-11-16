@@ -49,7 +49,7 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Precio de adquisición</mat-label>
+      <mat-label>Precio de compra por la agencia</mat-label>
       <input matInput type="number" formControlName="precioAdquisicion">
       @if (esVendido) { <mat-hint>No se puede modificar en un vehículo vendido</mat-hint> }
       <mat-error>{{ mensajeError('precioAdquisicion') }}</mat-error>
