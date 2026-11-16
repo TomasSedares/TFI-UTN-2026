@@ -107,3 +107,69 @@
     // Aire para que la sombra/hover de las cards no se corte en los bordes del scroll.
     padding: 4px 4px 8px;
 }
+
+// El botón de filtros solo existe en mobile.
+.filtros-toggle {
+    display: none;
+}
+
+// Mobile: botón "Filtros" que despliega el panel, y cards en una sola columna.
+// La página scrollea completa (el scroll lo maneja .app-content).
+@media (max-width: 768px) {
+    :host {
+        height: auto;
+    }
+
+    .catalogo-container {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        padding: 1em 1em 0;
+        gap: 1em;
+    }
+
+    .filtros-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5em;
+        width: 100%;
+        height: 44px;
+    }
+
+    .filtros {
+        display: none;
+        margin: 0;
+        padding: 1em;
+
+        &--abierto {
+            display: block;
+        }
+
+        // Ya hay botón "Filtros", el título del panel sobra.
+        .titulo {
+            display: none;
+        }
+    }
+
+    .catalogo-main {
+        overflow: visible;
+        padding: 0;
+        gap: 1em;
+    }
+
+    .catalogo-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .catalogo-body {
+        overflow: visible;
+    }
+
+    .grilla-vehiculos {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        overflow: visible;
+        padding: 0;
+    }
+}

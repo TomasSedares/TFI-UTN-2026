@@ -7,9 +7,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { FiltrosComponent } from '../../components/filtros/filtros.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
-  imports: [VehiculoCardComponent, MatIconModule, FiltrosComponent, MatPaginatorModule],
+  imports: [VehiculoCardComponent, MatIconModule, MatButtonModule, FiltrosComponent, MatPaginatorModule],
   selector: 'app-catalogo',
   styleUrl: './catalogo.component.scss',
   templateUrl: './catalogo.component.html',
@@ -32,6 +33,9 @@ export class CatalogoComponent {
   pageIndex = signal(0);
   pageSize = signal(10);
   readonly pageSizeOptions = [5, 10, 25];
+
+  // Solo mobile: muestra/oculta el panel de filtros.
+  filtrosAbiertos = signal(false);
 
   constructor() {
     this.cargar();

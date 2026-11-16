@@ -1,5 +1,12 @@
 <div class="catalogo-container">
-    <aside class="filtros">
+    <button mat-stroked-button type="button" class="filtros-toggle"
+        [attr.aria-expanded]="filtrosAbiertos()" (click)="filtrosAbiertos.set(!filtrosAbiertos())">
+        <mat-icon fontIcon="filter_list"></mat-icon>
+        Filtros
+        <mat-icon [fontIcon]="filtrosAbiertos() ? 'expand_less' : 'expand_more'"></mat-icon>
+    </button>
+
+    <aside class="filtros" [class.filtros--abierto]="filtrosAbiertos()">
         <div class="titulo">
             <mat-icon aria-hidden="false" aria-label="Filtros" fontIcon="filter_list"></mat-icon>
             <p>Filtros</p>

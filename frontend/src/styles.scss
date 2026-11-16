@@ -447,10 +447,3 @@ mat-paginator.mat-mdc-paginator {
     width: 10rem;
   }
 }
-
-// Espacio para la barra de navegación inferior en mobile
-@media (max-width: 768px) {
-  body {
-    padding-bottom: 64px;
-  }
-}
