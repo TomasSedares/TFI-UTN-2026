@@ -87,7 +87,6 @@
             [attr.aria-label]="ocultarPassword() ? 'Mostrar contraseña' : 'Ocultar contraseña'">
             <mat-icon [fontIcon]="ocultarPassword() ? 'visibility' : 'visibility_off'"></mat-icon>
           </button>
-          <mat-hint>Dejá el campo vacío para mantener tu contraseña actual.</mat-hint>
           <mat-error>
             @if (form.controls.password.hasError('minlength')) {
               Debe tener al menos 8 caracteres.

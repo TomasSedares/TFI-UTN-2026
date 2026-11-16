@@ -69,6 +69,10 @@
     --mdc-text-button-label-text-color: rgba(255, 255, 255, 0.92);
     --mat-text-button-state-layer-color: #ffffff;
     color: rgba(255, 255, 255, 0.92);
+
+    .mat-icon {
+      color: #ffffff;
+    }
   }
 
   // En desktop se muestran los textos; los iconos extra solo en mobile
