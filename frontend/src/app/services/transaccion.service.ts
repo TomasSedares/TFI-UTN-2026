@@ -3,7 +3,7 @@ import { inject, Injectable, Service } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Pagina } from '../models/Vehiculo';
 import { TRANSACCIONES_URL } from './api_config';
-import { ActualizarTransaccion, AsignarVisita, BalanceTransacciones, CrearTransaccion, FiltrosTransaccion, SolicitarTransaccion, Transaccion } from '../models/Transacciones';
+import { ActualizarTransaccion, AsignarVisita, BalanceTransacciones, ComisionVendedor, CrearTransaccion, FiltrosTransaccion, SolicitarTransaccion, Transaccion } from '../models/Transacciones';
 
 
 @Service()
@@ -62,6 +62,13 @@ export class TransaccionService {
       .set('fechaHasta', this.formatearFecha(fechaHasta));
 
     return this.http.get<BalanceTransacciones>(`${TRANSACCIONES_URL}/rendimiento`, { params });
+  }
+
+  comisionPorVendedor(vendedorId: number, fechaDesde: Date, fechaHasta: Date): Observable<ComisionVendedor> {
+    const params = new HttpParams()
+      .set('fechaDesde', this.formatearFecha(fechaDesde))
+      .set('fechaHasta', this.formatearFecha(fechaHasta));
+    return this.http.get<ComisionVendedor>(`${TRANSACCIONES_URL}/comision-vendedor/${vendedorId}`, { params });
   }
 
   formatearFecha(fecha: Date): string {

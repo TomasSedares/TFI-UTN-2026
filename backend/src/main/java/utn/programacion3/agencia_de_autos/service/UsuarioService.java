@@ -16,6 +16,8 @@ public interface UsuarioService {
 
     List<UsuarioResponseDTO> listarTodos();
 
+    List<UsuarioResponseDTO> listarVendedores();
+
     UsuarioResponseDTO buscarPorId(Long id);
 
     Usuario buscarEntityPorId(Long id);

@@ -89,3 +89,37 @@ export interface BalanceTransacciones {
     fecha_desde: string;
     fecha_hasta: string;
 }
+
+export interface ComisionVendedor {
+    id: number;
+    comision_total: number;
+    vendedor_id: number;
+    nombre_completo: string;
+    email: string;
+}
+
+export interface AuditoriaTransaccion {
+    id: number;
+    transaccion_id: number;
+    vendedor_id: number | null;
+    created_at: string;
+    precioFinalAnterior: number | null;
+    precioFinalNuevo: number | null;
+    metodoPagoAnterior: MetodoPago | null;
+    metodoPagoNuevo: MetodoPago | null;
+    estadoAnterior: EstadoTransaccion | null;
+    estadoNuevo: EstadoTransaccion | null;
+}
+
+export interface FiltrosAuditoria {
+    transaccionId?: number;
+    vendedorId?: number;
+    fechaDesde?: string;
+    fechaHasta?: string;
+    precioFinalAnterior?: number;
+    precioFinalNuevo?: number;
+    metodoPagoAnterior?: MetodoPago;
+    metodoPagoNuevo?: MetodoPago;
+    estadoAnterior?: EstadoTransaccion;
+    estadoNuevo?: EstadoTransaccion;
+}

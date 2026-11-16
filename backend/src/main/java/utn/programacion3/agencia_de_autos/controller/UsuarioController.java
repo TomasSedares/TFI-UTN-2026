@@ -49,6 +49,20 @@ public class UsuarioController {
     }
 
     @Operation(
+            summary = "Listar vendedores",
+            description = "Retorna únicamente los usuarios con rol VENDEDOR."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de vendedores obtenida exitosamente"),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado. Se requiere rol ADMINISTRADOR")
+    })
+    @GetMapping("/vendedores")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<List<UsuarioResponseDTO>> listarVendedores() {
+        return ResponseEntity.ok(usuarioService.listarVendedores());
+    }
+
+    @Operation(
             summary = "Obtener el perfil del usuario autenticado",
             description = "Retorna los datos del usuario actualmente logueado, identificado a partir de su token JWT. Disponible para cualquier rol."
     )

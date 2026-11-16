@@ -14,18 +14,6 @@
   }
 }
 
-.date-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 14px;
-
-  mat-form-field {
-    width: 10rem;
-  }
-}
-
 .mat-column-vehiculo,
 .mat-column-precio {
   color: var(--mat-sys-on-surface);
