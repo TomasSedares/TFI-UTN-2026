@@ -25,6 +25,8 @@ public class TransaccionResponseDTO {
 
     private Long vehiculo_id;
 
+    private String modelo;
+
     private String patente;
 
     private Long cliente_id;
@@ -32,6 +34,10 @@ public class TransaccionResponseDTO {
     private String cliente_email;
 
     private Long vendedor_id;
+
+    private String vendedor_nombre;
+
+    private String vendedor_apellido;
 
     private String vendedor_email;
 

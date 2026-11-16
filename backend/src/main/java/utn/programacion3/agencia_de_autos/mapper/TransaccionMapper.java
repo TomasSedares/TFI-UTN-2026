@@ -25,8 +25,11 @@ public interface TransaccionMapper {
     @Mapping(target = "vehiculo_id", source = "vehiculo.id")
     @Mapping(target = "cliente_id", source = "cliente.id")
     @Mapping(target = "vendedor_id", source = "vendedor.id")
+    @Mapping(target = "modelo", source = "vehiculo.modelo.nombre")
     @Mapping(target = "patente", source = "vehiculo.patente")
     @Mapping(target = "cliente_email", source = "cliente.email")
+    @Mapping(target = "vendedor_nombre", source = "vendedor.nombre")
+    @Mapping(target = "vendedor_apellido", source = "vendedor.apellido")
     @Mapping(target = "vendedor_email", source = "vendedor.email")
     TransaccionResponseDTO toResponseDTO(Transaccion transaccion);
 
