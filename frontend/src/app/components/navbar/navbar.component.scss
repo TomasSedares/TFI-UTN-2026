@@ -26,25 +26,92 @@
   &__links {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
+  }
 
-    // Los botones de Material toman el color de texto de las variables del tema
-    // (definidas para fondos claros), no del `color` heredado del toolbar oscuro.
-    // Los sobreescribimos acá para que se vean sobre el fondo oscuro del navbar.
-    a[mat-button],
-    a[mat-stroked-button],
-    button[mat-stroked-button] {
-      color: rgba(255, 255, 255, 0.92);
-      --mdc-text-button-label-text-color: rgba(255, 255, 255, 0.92);
-      --mdc-outlined-button-label-text-color: rgba(255, 255, 255, 0.92);
-      --mdc-outlined-button-outline-color: rgba(255, 255, 255, 0.4);
-      --mat-text-button-state-layer-color: #ffffff;
-      --mat-outlined-button-state-layer-color: #ffffff;
+  // Tabs de Material: el link activo lo marca Material (indicador + estado activo).
+  // Solo ajustamos los colores para el fondo oscuro del navbar.
+  &__tabs {
+    --mat-tab-divider-height: 0;
+    --mat-tab-header-divider-height: 0;
+    --mat-tab-inactive-label-text-color: rgba(255, 255, 255, 0.92);
+    --mat-tab-inactive-focus-label-text-color: #ffffff;
+    --mat-tab-inactive-hover-label-text-color: #ffffff;
+    --mat-tab-active-label-text-color: #c9a84c;
+    --mat-tab-active-focus-label-text-color: #c9a84c;
+    --mat-tab-active-hover-label-text-color: #c9a84c;
+    --mat-tab-active-indicator-color: #c9a84c;
+    --mat-tab-active-focus-indicator-color: #c9a84c;
+    --mat-tab-active-hover-indicator-color: #c9a84c;
+    --mat-tab-inactive-ripple-color: #ffffff;
+    --mat-tab-active-ripple-color: #c9a84c;
+    --mat-tab-header-inactive-label-text-color: rgba(255, 255, 255, 0.92);
+    --mat-tab-header-active-label-text-color: #c9a84c;
+    --mat-tab-header-active-focus-label-text-color: #c9a84c;
+    --mat-tab-header-active-hover-label-text-color: #c9a84c;
+    --mdc-tab-indicator-active-indicator-color: #c9a84c;
+    --mat-tab-header-active-ripple-color: #c9a84c;
+    --mat-tab-header-inactive-ripple-color: #ffffff;
+    background: transparent;
+
+    .mat-mdc-tab-link {
+      min-width: 0;
+      padding: 0 16px;
+      opacity: 1;
+    }
+
+    .mat-icon {
+      margin-right: 0;
     }
   }
 
-  &__link--active {
-    color: #c9a84c;
-    --mdc-text-button-label-text-color: #c9a84c;
+  &__logout {
+    --mdc-text-button-label-text-color: rgba(255, 255, 255, 0.92);
+    --mat-text-button-state-layer-color: #ffffff;
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  // En desktop se muestran los textos; los iconos extra solo en mobile
+  &__icon {
+    display: none;
+  }
+
+  // Mobile: las opciones pasan a una barra fija en la parte inferior
+  @media (max-width: 768px) {
+    padding: 0 16px;
+
+    &__links {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 20;
+      justify-content: space-around;
+      gap: 0;
+      padding: 0 4px env(safe-area-inset-bottom);
+      background: #0f0f0f;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    &__tabs {
+      flex: 1 1 auto;
+    }
+
+    &__logout {
+      min-width: 0;
+      padding: 0 12px;
+
+      .mat-icon {
+        margin: 0;
+      }
+    }
+
+    &__icon {
+      display: inline-block;
+    }
+
+    &__label {
+      display: none;
+    }
   }
 }
