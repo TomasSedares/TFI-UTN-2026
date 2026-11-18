@@ -7,9 +7,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { FiltrosComponent } from '../../components/filtros/filtros.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
-  imports: [VehiculoCardComponent, MatIconModule, FiltrosComponent, MatPaginatorModule],
+  imports: [VehiculoCardComponent, MatIconModule, FiltrosComponent, MatPaginatorModule, MatProgressSpinner],
   selector: 'app-catalogo',
   styleUrl: './catalogo.component.scss',
   templateUrl: './catalogo.component.html',

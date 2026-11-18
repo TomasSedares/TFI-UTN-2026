@@ -5,12 +5,13 @@ import { RouterLink } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
 import { CurrencyPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import type { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { TransaccionService } from '../../services/transaccion.service';import type { ApiError } from '../../models/ApiError';
 
 @Component({
-  imports: [RouterLink, MatIcon, CurrencyPipe, MatButtonModule],
+  imports: [RouterLink, MatIcon, CurrencyPipe, MatButtonModule, MatProgressSpinner],
   selector: 'app-vehiculo-detalle',
   styleUrl: './vehiculo-detalle.component.scss',
   templateUrl: './vehiculo-detalle.component.html',
@@ -26,6 +27,7 @@ export class VehiculoDetalleComponent {
   id = input.required<string>();
   logged = this.auth.isLoggedIn;
   vehiculo = signal<Vehiculo | null>(null);
+  cargando = signal(true);
   indice = signal(0);
 
   enviandoSolicitud = signal(false);
@@ -75,12 +77,16 @@ export class VehiculoDetalleComponent {
       const idActual = this.id();
 
       if (idActual) {
+        this.cargando.set(true);
         this.vehiculoSrv.obtenerPorId(idActual).subscribe({
           next: res => {
-            console.log('Vehículo recuperado:', res);
             this.vehiculo.set(res);
+            this.cargando.set(false);
           },
-          error: err => console.error('Error al traer vehículo', err)
+          error: () => {
+            this.vehiculo.set(null);
+            this.cargando.set(false);
+          }
         });
       }
     });

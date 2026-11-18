@@ -5,7 +5,11 @@
             Volver al catalogo
         </a>
     </div>
-    @if(vehiculo(); as v){
+    @if (cargando()) {
+    <div class="detalle-vehiculo-cargando">
+        <mat-progress-spinner mode="indeterminate" [diameter]="80" />
+    </div>
+    } @else if(vehiculo(); as v){
     <div class="detalle-vehiculo-body">
         <div class="imagenes">
             <img class="imagen-principal" [src]="imagenActual()" [alt]="v.modeloNombre">
