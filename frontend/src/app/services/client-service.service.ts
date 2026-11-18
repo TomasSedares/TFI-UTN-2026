@@ -7,7 +7,7 @@ import VehicleResponse from '../models/vehicle-response-model';
 export class ClientServiceService {
   private http : HttpClient = inject(HttpClient)
 
-  readonly URL = 'http://localhost:8080/vehiculos'
+  readonly URL = '/vehiculos'
 
   getVehicles(){
     return this.http.get<Vehicle[]>(this.URL)

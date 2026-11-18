@@ -12,7 +12,7 @@ public class SpaController {
 
     @GetMapping({
             "/catalogo", "/login", "/registro", "/perfil", "/tramites",
-            "/menu", "/menu/**"
+            "/menu", "/menu/**", "/vehiculo/**"
     })
     public String forward() {
         return "forward:/index.html";

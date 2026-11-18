@@ -24,7 +24,7 @@
   } @else {
     <ul class="tramites__list">
       @for (tramite of tramites(); track tramite.id) {
-        <li class="tramites__item" [routerLink]="['/vehiculos', tramite.vehiculo_id]">
+        <li class="tramites__item" [routerLink]="['/vehiculo', tramite.vehiculo_id]">
           <div class="tramites__item-header">
             <span class="tramites__item-title">Trámite #{{ tramite.id }}</span>
             <span class="tramites__estado" [attr.data-estado]="tramite.estadoTransaccion">

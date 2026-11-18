@@ -63,6 +63,6 @@ export class CatalogoComponent {
   }
 
   irDetalle(id: number) {
-    this.router.navigate(['/vehiculos', id]);
+    this.router.navigate(['/vehiculo', id]);
   }
 }

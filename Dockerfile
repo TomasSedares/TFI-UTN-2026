@@ -17,4 +17,5 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=backend-build /app/backend/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Limita el heap al 75% de la RAM del contenedor (el plan free de Render tiene 512 MB)
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "app.jar"]

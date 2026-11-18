@@ -67,7 +67,7 @@ public class SecurityConfig {
                                 "/", "/index.html", "/*.js", "/*.css", "/*.ico", "/*.png", "/*.svg",
                                 "/media/**", "/assets/**",
                                 "/catalogo", "/login", "/registro", "/perfil", "/tramites",
-                                "/menu", "/menu/**"
+                                "/menu", "/menu/**", "/vehiculo/**"
                         ).permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(
