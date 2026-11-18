@@ -6,7 +6,7 @@ import { Usuario, UsuarioRequest } from '../models/Usuario';
 //hace solo llamadas http
 @Service()
 export class AuthApiService {
-  private readonly apiUrl = 'http://localhost:8080';
+  private readonly apiUrl = '';
   private readonly http = inject(HttpClient);
 
   login(request: LoginRequest) {

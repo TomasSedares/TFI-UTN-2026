@@ -7,7 +7,7 @@ import type { PerfilUpdateRequest, ROL, Usuario, UsuarioRequest } from '../model
 @Service()
 export class UsuarioService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/usuarios';
+  private readonly apiUrl = '/usuarios';
 
   getAll(): Observable<Usuario[]> {
     return this.http.get<Usuario[]>(this.apiUrl);

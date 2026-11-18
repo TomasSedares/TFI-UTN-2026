@@ -62,6 +62,14 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // Frontend Angular servido desde /static (los guards de Angular controlan el acceso)
+                        .requestMatchers(org.springframework.http.HttpMethod.GET,
+                                "/", "/index.html", "/*.js", "/*.css", "/*.ico", "/*.png", "/*.svg",
+                                "/media/**", "/assets/**",
+                                "/catalogo", "/login", "/registro", "/perfil", "/tramites",
+                                "/menu", "/menu/**"
+                        ).permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers(
                                 "/auth/**",
                                 "/v3/api-docs/**",
