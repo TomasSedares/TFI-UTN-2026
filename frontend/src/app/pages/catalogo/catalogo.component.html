@@ -23,7 +23,9 @@
         </div>
 
         @if (vehiculos() === null) {
-        <p>Cargando vehículos...</p>
+        <div class="catalogo-cargando">
+            <mat-progress-spinner mode="indeterminate" [diameter]="80" />
+        </div>
         } @else if ((vehiculos()?.totalElements ?? 0) > 0) {
         <div class="catalogo-body">
             <div class="grilla-vehiculos">
