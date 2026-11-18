@@ -163,3 +163,19 @@
         color: var(--mat-sys-error);
     }
 }
+
+@media (max-width: 768px) {
+    .detalle-vehiculo-body {
+        flex-direction: column;
+        gap: 2em;
+
+        .imagenes {
+            flex: 0 0 100%;
+            width: 100%;
+        }
+
+        .detalle-vehiculo-main {
+            width: 100%;
+        }
+    }
+}
