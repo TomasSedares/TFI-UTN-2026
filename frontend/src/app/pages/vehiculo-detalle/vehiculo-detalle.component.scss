@@ -33,26 +33,31 @@
     justify-content: flex-start;
     align-items: flex-start;
     gap: 4em;
+    width: 100%;
 
     .imagenes {
         display: flex;
+        flex: 0 0 50%;
         flex-direction: column;
         justify-content: flex-start;
         align-items: center;
         gap: 1em;
-        max-width: 50%;
+        min-width: 0;
 
         .imagen-principal {
+            display: block;
             width: 100%;
-            aspect-ratio: 16 / 10;
-            object-fit: cover;
+            aspect-ratio: 3 / 2;
+            object-fit: contain;
             border-radius: 12px;
+            background: var(--app-border-soft);
         }
 
         .selector-imagenes {
             display: flex;
             align-items: center;
             gap: 8px;
+            width: 100%;
             margin-top: 12px;
         }
 
@@ -102,7 +107,9 @@
 
 .detalle-vehiculo-main {
     display: flex;
+    flex: 1;
     flex-direction: column;
+    min-width: 0;
     justify-content: flex-start;
     align-items: flex-start;
     height: 100%;
@@ -135,7 +142,24 @@
         }
     }
 
+    .estado-vehiculo {
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-weight: 500;
+        background: var(--mat-sys-tertiary-container);
+        color: var(--mat-sys-on-tertiary-container);
+
+        &.vendido {
+            background: var(--mat-sys-error-container);
+            color: var(--mat-sys-on-error-container);
+        }
+    }
+
     .solicitar-turno {
         width: 100% !important;
+    }
+
+    .solicitud-error {
+        color: var(--mat-sys-error);
     }
 }

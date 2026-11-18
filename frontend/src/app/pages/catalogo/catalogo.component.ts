@@ -1,5 +1,4 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { MatGridListModule } from '@angular/material/grid-list';
 import { VehiculoService } from '../../services/vehiculo-service.service';
 import { FiltrosVehiculo, Pagina, Vehiculo } from '../../models/Vehiculo';
 import { VehiculoCardComponent } from '../../components/vehiculo-card/vehiculo-card.component';
@@ -8,9 +7,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { FiltrosComponent } from '../../components/filtros/filtros.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
-  imports: [MatGridListModule, VehiculoCardComponent, MatIconModule, FiltrosComponent, MatPaginatorModule],
+  imports: [VehiculoCardComponent, MatIconModule, MatButtonModule, FiltrosComponent, MatPaginatorModule],
   selector: 'app-catalogo',
   styleUrl: './catalogo.component.scss',
   templateUrl: './catalogo.component.html',
@@ -33,6 +33,9 @@ export class CatalogoComponent {
   pageIndex = signal(0);
   pageSize = signal(10);
   readonly pageSizeOptions = [5, 10, 25];
+
+  // Solo mobile: muestra/oculta el panel de filtros.
+  filtrosAbiertos = signal(false);
 
   constructor() {
     this.cargar();

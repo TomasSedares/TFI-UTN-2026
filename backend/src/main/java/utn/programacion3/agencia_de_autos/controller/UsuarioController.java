@@ -8,10 +8,15 @@ import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import utn.programacion3.agencia_de_autos.dto.request.PerfilUpdateDTO;
 import utn.programacion3.agencia_de_autos.dto.request.UsuarioRequestDTO;
+import utn.programacion3.agencia_de_autos.dto.request.CambiarRolRequestDTO;
 import utn.programacion3.agencia_de_autos.dto.response.UsuarioResponseDTO;
 import utn.programacion3.agencia_de_autos.service.UsuarioService;
+import utn.programacion3.agencia_de_autos.dto.request.CambiarEstadoRequestDTO;
+
 
 import java.util.List;
 
@@ -44,6 +49,47 @@ public class UsuarioController {
     }
 
     @Operation(
+            summary = "Listar vendedores",
+            description = "Retorna únicamente los usuarios con rol VENDEDOR."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de vendedores obtenida exitosamente"),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado. Se requiere rol ADMINISTRADOR")
+    })
+    @GetMapping("/vendedores")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<List<UsuarioResponseDTO>> listarVendedores() {
+        return ResponseEntity.ok(usuarioService.listarVendedores());
+    }
+
+    @Operation(
+            summary = "Obtener el perfil del usuario autenticado",
+            description = "Retorna los datos del usuario actualmente logueado, identificado a partir de su token JWT. Disponible para cualquier rol."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Perfil obtenido exitosamente"),
+            @ApiResponse(responseCode = "401", description = "No autenticado")
+    })
+    @GetMapping("/me")
+    public ResponseEntity<UsuarioResponseDTO> obtenerPerfil() {
+        return ResponseEntity.ok(usuarioService.obtenerPerfilActual());
+    }
+
+    @Operation(
+            summary = "Actualizar el perfil del usuario autenticado",
+            description = "Permite al usuario logueado modificar su nombre, apellido, email y, opcionalmente, su contraseña. El rol no puede modificarse."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Perfil actualizado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos o email ya en uso por otro usuario"),
+            @ApiResponse(responseCode = "401", description = "No autenticado")
+    })
+    @PutMapping("/me")
+    public ResponseEntity<UsuarioResponseDTO> actualizarPerfil(@Valid @RequestBody PerfilUpdateDTO requestDTO) {
+        return ResponseEntity.ok(usuarioService.actualizarPerfilActual(requestDTO));
+    }
+
+    @Operation(
             summary = "Actualizar datos de un usuario",
             description = "Permite modificar el nombre, apellido, email o contraseña de un usuario existente mediante su ID."
     )
@@ -59,18 +105,14 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioService.actualizarUsuario(id, requestDTO));
     }
 
-    @Operation(
-            summary = "Dar de baja lógica a un usuario",
-            description = "Cambia de forma parcial el estado del usuario a inactivo (activo = false) sin eliminarlo físicamente de la base de datos."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Estado del usuario modificado exitosamente"),
-            @ApiResponse(responseCode = "404", description = "No se encontro ningún usuario con el ID provisto")
-    })
-    @PatchMapping("/{id}")
+
+    @PatchMapping ("/{id}/rol")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<UsuarioResponseDTO> cambiarEstado(@PathVariable Long id) {
-        return ResponseEntity.ok(usuarioService.darDeBaja(id));
+    public ResponseEntity<UsuarioResponseDTO> cambiarRol(
+        @PathVariable Long id,
+        @Valid @RequestBody CambiarRolRequestDTO dto
+    ) {
+        return ResponseEntity.ok(usuarioService.cambiarRol(id,dto.getRolUsuario()));
     }
 
     @PostMapping("/vendedores")
@@ -101,5 +143,22 @@ public class UsuarioController {
 
         return ResponseEntity.ok(usuario);
 
+    }
+    @PatchMapping("/{id}/estado")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @Operation(
+            summary = "Cambiar el estado activo de un usuario",
+            description = "Permite al Administrador activar o desactivar un usuario mediante su ID. El estado activo se representa con un booleano."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Estado del usuario modificado exitosamente"),
+            @ApiResponse(responseCode = "404", description = "No se encontró ningún usuario con el ID provisto"),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado (Se requiere rol ADMIN)")
+    })
+    public ResponseEntity<UsuarioResponseDTO> cambiarEstado(
+        @PathVariable Long id,
+        @Valid @RequestBody CambiarEstadoRequestDTO dto
+    ) {
+        return ResponseEntity.ok(usuarioService.cambiarEstado(id, dto.getActivo()));
     }
 }

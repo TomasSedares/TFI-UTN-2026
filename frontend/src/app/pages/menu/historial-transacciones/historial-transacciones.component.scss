@@ -1,0 +1,19 @@
+.date-filters .historial__campo-ancho {
+  width: 14rem;
+}
+
+.mat-column-estado,
+.mat-column-precio,
+.mat-column-metodoPago {
+  color: var(--mat-sys-on-surface);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mat-column-vendedor {
+  min-width: 200px;
+}
+
+@media (max-width: 760px) {
+  .mat-mdc-table { min-width: 1060px; }
+}

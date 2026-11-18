@@ -1,21 +1,60 @@
+:host {
+    display: block;
+    height: 100%;
+}
+
+// Filtros fijos a la izquierda (alto completo) y contenido con scroll propio a la derecha.
 .catalogo-container {
     display: grid;
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-        'header'
-        'main';
-    min-height: 100vh;
-    width: 100%;
-    border: 1px solid black;
+    grid-template-columns: 300px 1fr;
+    grid-template-rows: minmax(0, 1fr);
+    height: 100%;
+}
+
+// Caja con margen parejo en los 4 lados; la grilla la estira al alto disponible
+// (por eso no lleva height: 100%, que sumado al margin desbordaría).
+.filtros {
+    box-sizing: border-box;
+    margin: 2em 0 2em 2em;
+    padding: 1.5em;
+    overflow-y: auto;
+    border: 1px solid var(--app-border);
+    border-radius: 16px;
+    background: var(--mat-sys-surface);
+    box-shadow: 0 2px 3px #11243a0a;
+
+    .titulo {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 1em;
+        margin-bottom: 1em;
+
+        p {
+            margin: 0;
+            font-weight: 600;
+        }
+    }
+}
+
+// Sin height: 100% (la grilla la estira): sumado al padding desbordaba y hacía
+// scrollear toda la página, filtros incluidos. Acá no scrollea nada: solo las cards.
+.catalogo-main {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5em;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    padding: 2em;
 }
 
 .catalogo-header {
-    grid-area: header;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
-    padding: 1em 2em;
 
     .catalogo {
         font-size: 1rem;
@@ -35,48 +74,102 @@
     }
 }
 
-.catalogo-main {
-    grid-area: main;
+.catalogo-header {
+    flex: 0 0 auto;
+}
+
+// Ocupa el alto restante: la grilla scrollea y el paginador queda fijo abajo.
+.catalogo-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 1em;
+    width: 100%;
+
+    mat-paginator {
+        flex: 0 0 auto;
+        width: 100% !important;
+        border-radius: 5px;
+    }
+}
+
+.grilla-vehiculos {
+    box-sizing: border-box;
     display: grid;
-    grid-template-columns: 250px 1fr;
-    grid-template-areas: 'filtros cards';
-    gap: 2em;
-    padding: 2em;
-    align-items: start;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-content: start;
+    gap: 24px;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    overflow-y: auto;
+    // Aire para que la sombra/hover de las cards no se corte en los bordes del scroll.
+    padding: 4px 4px 8px;
+}
+
+// El botón de filtros solo existe en mobile.
+.filtros-toggle {
+    display: none;
+}
+
+// Mobile: botón "Filtros" que despliega el panel, y cards en una sola columna.
+// La página scrollea completa (el scroll lo maneja .app-content).
+@media (max-width: 768px) {
+    :host {
+        height: auto;
+    }
+
+    .catalogo-container {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        padding: 1em 1em 0;
+        gap: 1em;
+    }
+
+    .filtros-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5em;
+        width: 100%;
+        height: 44px;
+    }
 
     .filtros {
-        grid-area: filtros;
-        height: max-content;
-        border: 1px solid lightgrey;
-        border-radius: 5px;
-        padding: 1em 2em;
+        display: none;
+        margin: 0;
+        padding: 1em;
 
-        .titulo {
-            display: flex;
-            flex-direction: row;
-            justify-content: flex-start;
-            align-items: center;
-            gap: 1em;
+        &--abierto {
+            display: block;
         }
+
+        // Ya hay botón "Filtros", el título del panel sobra.
+        .titulo {
+            display: none;
+        }
+    }
+
+    .catalogo-main {
+        overflow: visible;
+        padding: 0;
+        gap: 1em;
+    }
+
+    .catalogo-header h1 {
+        font-size: 1.5rem;
     }
 
     .catalogo-body {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        gap: 1em;
-        min-width: 0;
-        width: 100%;
-
-        mat-paginator {
-            width: 100% !important;
-            border-radius: 5px;
-        }
+        overflow: visible;
     }
 
-    mat-grid-list {
-        grid-area: cards;
-        width: 100%;
+    .grilla-vehiculos {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        overflow: visible;
+        padding: 0;
     }
 }

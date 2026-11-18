@@ -14,6 +14,9 @@ export interface Vehiculo {
   imagenes: string[];
   createdAt: string;
   updatedAt: string;
+  tieneTransaccionActiva?: boolean;
+  tieneSolicitudPendiente?: boolean;
+  esPersonalAgencia?: boolean;
 }
 
 export enum EstadoVehiculo {
@@ -23,18 +26,57 @@ export enum EstadoVehiculo {
   BAJA = 'BAJA',
 }
 
+export const ETIQUETA_ESTADO_VEHICULO: Record<EstadoVehiculo, string> = {
+  [EstadoVehiculo.DISPONIBLE]: 'Disponible',
+  [EstadoVehiculo.RESERVADO]: 'Reservado',
+  [EstadoVehiculo.VENDIDO]: 'Vendido',
+  [EstadoVehiculo.BAJA]: 'No disponible',
+};
+
 export enum TipoCombustible {
   NAFTA = 'NAFTA',
   DIESEL = 'DIESEL',
   ELECTRICO = 'ELECTRICO',
   HIBRIDO = 'HIBRIDO',
-  GNC = 'GNC',
 }
 
 export enum TipoTransmision {
   MANUAL = 'MANUAL',
   AUTOMATICA = 'AUTOMATICA',
-  SEMIAUTOMATICA = 'SEMIAUTOMATICA',
+}
+
+export const ETIQUETA_COMBUSTIBLE: Record<TipoCombustible, string> = {
+  [TipoCombustible.NAFTA]: 'Nafta',
+  [TipoCombustible.DIESEL]: 'Diesel',
+  [TipoCombustible.HIBRIDO]: 'Híbrido',
+  [TipoCombustible.ELECTRICO]: 'Eléctrico',
+};
+
+export const ETIQUETA_TRANSMISION: Record<TipoTransmision, string> = {
+  [TipoTransmision.MANUAL]: 'Manual',
+  [TipoTransmision.AUTOMATICA]: 'Automática',
+};
+
+export interface VehiculoRequest {
+  patente: string;
+  anio: number;
+  precioAdquisicion: number;
+  precioVenta: number;
+  modeloId: number;
+  kilometraje: number;
+  color: string;
+  descripcion: string;
+  estado: EstadoVehiculo;
+  tipoTransmision: TipoTransmision;
+  tipoCombustible: TipoCombustible;
+}
+
+export interface VehiculoGestion extends Omit<VehiculoRequest, 'descripcion'> {
+  id: number;
+  marcaId: number;
+  marcaNombre: string;
+  modeloNombre: string;
+  descripcion: string | null;
 }
 
 export interface FiltrosVehiculo {
@@ -43,6 +85,7 @@ export interface FiltrosVehiculo {
   combustible?: TipoCombustible;
   tipoTransmision?: TipoTransmision;
   estado?: EstadoVehiculo;
+  incluirVendidos?: boolean;
   color?: string;
   minPrecio?: number;
   maxPrecio?: number;

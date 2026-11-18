@@ -5,20 +5,28 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import utn.programacion3.agencia_de_autos.dto.request.*;
 import utn.programacion3.agencia_de_autos.dto.response.ReporteGananciasResponseDTO;
+import utn.programacion3.agencia_de_autos.dto.response.VehiculoGestionResponseDTO;
 import utn.programacion3.agencia_de_autos.dto.response.VehiculoPublicResponseDTO;
 import utn.programacion3.agencia_de_autos.dto.response.VehiculoResponseDTO;
 import utn.programacion3.agencia_de_autos.exception.ModeloNoEncontradoException;
+import utn.programacion3.agencia_de_autos.exception.NegocioException;
 import utn.programacion3.agencia_de_autos.exception.PatenteDuplicadaException;
 import utn.programacion3.agencia_de_autos.exception.VehiculoNoEncontradoException;
 import utn.programacion3.agencia_de_autos.mapper.VehiculoMapper;
 import utn.programacion3.agencia_de_autos.model.Modelo;
 import utn.programacion3.agencia_de_autos.model.Vehiculo;
+import utn.programacion3.agencia_de_autos.model.enums.EstadoTransaccion;
 import utn.programacion3.agencia_de_autos.model.enums.EstadoVehiculo;
+import utn.programacion3.agencia_de_autos.model.enums.Rol;
 import utn.programacion3.agencia_de_autos.repository.ModeloRepository;
+import utn.programacion3.agencia_de_autos.repository.TransaccionRepository;
 import utn.programacion3.agencia_de_autos.repository.VehiculoRepository;
 import utn.programacion3.agencia_de_autos.repository.VehiculoSpecification;
 
@@ -35,6 +43,7 @@ public class VehiculoServiceImpl implements VehiculoService {
     private final ModeloRepository modeloRepository;
     private final VehiculoMapper vehiculoMapper;
     private final ImagenVehiculoService imagenVehiculoService;
+    private final TransaccionRepository transaccionRepository;
 
     @Override
     public VehiculoResponseDTO crearVehiculo(VehiculoRequestDTO request) {
@@ -64,7 +73,7 @@ public class VehiculoServiceImpl implements VehiculoService {
     }
     @Override
     @Transactional(readOnly = true)
-    public VehiculoResponseDTO obtenerVehiculoPorId(Long id){
+    public VehiculoResponseDTO obtenerVehiculoPorId(Long id, Authentication authentication){
         Vehiculo vehiculo = vehiculoRepository.findById(id)
                 .orElseThrow(VehiculoNoEncontradoException::new);
         VehiculoResponseDTO dto = vehiculoMapper.toResponse(vehiculo);
@@ -72,6 +81,25 @@ public class VehiculoServiceImpl implements VehiculoService {
         dto.setImagenPrincipalUrl(
                 imagenVehiculoService.obtenerUrlPrincipal(vehiculo.getId())
         );
+
+        boolean autenticado = authentication != null
+                && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken);
+
+        if (autenticado) {
+            dto.setEsPersonalAgencia(authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .anyMatch(a -> a.equals("ROLE_" + Rol.VENDEDOR.name())
+                            || a.equals("ROLE_" + Rol.ADMINISTRADOR.name())));
+            dto.setTieneTransaccionActiva(
+                    transaccionRepository.existsByVehiculoIdAndClienteEmailAndEstadoTransaccionNot(
+                            id, authentication.getName(), EstadoTransaccion.CANCELADO)
+            );
+            dto.setTieneSolicitudPendiente(
+                    transaccionRepository.existsByClienteEmailAndEstadoTransaccion(
+                            authentication.getName(), EstadoTransaccion.SOLICITAR)
+            );
+        }
         return dto;
     }
 
@@ -101,11 +129,17 @@ public class VehiculoServiceImpl implements VehiculoService {
         Vehiculo vehiculo = vehiculoRepository.findById(id)
                 .orElseThrow(VehiculoNoEncontradoException::new);
 
+        if (vehiculo.getEstado() == EstadoVehiculo.VENDIDO
+                && vehiculo.getPrecioAdquisicion().compareTo(request.getPrecioAdquisicion()) != 0) {
+            throw new NegocioException("No se puede modificar el precio de adquisición de un vehículo VENDIDO.");
+        }
+
         Modelo modelo = modeloRepository.findById(request.getModeloId())
                 .orElseThrow(ModeloNoEncontradoException::new);
 
         vehiculo.setPatente(request.getPatente());
         vehiculo.setAnio(request.getAnio());
+        vehiculo.setPrecioAdquisicion(request.getPrecioAdquisicion());
         vehiculo.setPrecioVenta(request.getPrecioVenta());
         vehiculo.setKilometraje(request.getKilometraje());
         vehiculo.setColor(request.getColor());
@@ -156,6 +190,14 @@ public class VehiculoServiceImpl implements VehiculoService {
                     );
                     return dto;
                 });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<VehiculoGestionResponseDTO> listarParaGestion(Pageable pageable) {
+
+        return vehiculoRepository.findAll(pageable)
+                .map(vehiculoMapper::toGestionResponse);
     }
 
     @Override

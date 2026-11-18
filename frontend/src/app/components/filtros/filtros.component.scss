@@ -5,3 +5,26 @@
     align-items: center;
     gap: 1em;
 }
+
+// Mobile: todos los campos en una misma columna, al mismo ancho
+@media (max-width: 768px) {
+    .campo {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+
+        mat-form-field {
+            width: 100%;
+        }
+    }
+
+    .acciones {
+        align-items: stretch;
+        width: 100%;
+
+        button {
+            width: 100%;
+        }
+    }
+}

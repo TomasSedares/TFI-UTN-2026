@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { roleGuard } from '../../guards/role.guard';
+import { ROL } from '../../models/Usuario';
 
 export const routes: Routes = [
   {
@@ -28,8 +30,24 @@ export const routes: Routes = [
       },
       {
         path: 'usuarios',
+        canActivate: [roleGuard],
+        data: {roles: [ROL.ADMINISTRADOR]},
         loadComponent: () =>
           import('./usuarios/usuarios.component').then((m) => m.UsuariosComponent),
+      },
+      {
+        path: 'comisiones',
+        canActivate: [roleGuard],
+        data: {roles: [ROL.ADMINISTRADOR]},
+        loadComponent: () =>
+          import('./comisiones/comisiones.component').then((m) => m.ComisionesComponent),
+      },
+      {
+        path: 'historial-transacciones',
+        canActivate: [roleGuard],
+        data: {roles: [ROL.ADMINISTRADOR]},
+        loadComponent: () =>
+          import('./historial-transacciones/historial-transacciones.component').then((m) => m.HistorialTransaccionesComponent),
       },
       {
         path: 'vehiculos',

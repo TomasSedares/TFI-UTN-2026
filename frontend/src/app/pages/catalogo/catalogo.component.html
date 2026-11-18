@@ -1,46 +1,48 @@
 <div class="catalogo-container">
-    <div class="catalogo-header">
-        <p class="catalogo">Catalogo</p>
-        <h1>Vehiculos disponibles</h1>
-        <p class="encontrados">{{vehiculos()?.totalElements}} vehiculos encontrados</p>
-    </div>
-    <div class="catalogo-main">
-        <aside class="filtros">
-            <div class="titulo">
-                <mat-icon aria-hidden="false" aria-label="Filtros" fontIcon="filter_list"></mat-icon>
-                <p>Filtros</p>
-            </div>
-            <app-filtros [marcas]="marcas()" [modelos]="modelos()" [combustibles]="combustibles()"
-                [transmisiones]="transmisiones()" (filtrosChange)="onFiltrar($event)" />
+    <button mat-stroked-button type="button" class="filtros-toggle"
+        [attr.aria-expanded]="filtrosAbiertos()" (click)="filtrosAbiertos.set(!filtrosAbiertos())">
+        <mat-icon fontIcon="filter_list"></mat-icon>
+        Filtros
+        <mat-icon [fontIcon]="filtrosAbiertos() ? 'expand_less' : 'expand_more'"></mat-icon>
+    </button>
 
-        </aside>
+    <aside class="filtros" [class.filtros--abierto]="filtrosAbiertos()">
+        <div class="titulo">
+            <mat-icon aria-hidden="false" aria-label="Filtros" fontIcon="filter_list"></mat-icon>
+            <p>Filtros</p>
+        </div>
+        <app-filtros [marcas]="marcas()" [modelos]="modelos()" [combustibles]="combustibles()"
+            [transmisiones]="transmisiones()" (filtrosChange)="onFiltrar($event)" />
+    </aside>
+
+    <section class="catalogo-main">
+        <div class="catalogo-header">
+            <p class="catalogo">Catalogo</p>
+            <h1>Vehiculos disponibles</h1>
+            <p class="encontrados">{{vehiculos()?.totalElements}} vehiculos encontrados</p>
+        </div>
+
         @if (vehiculos() === null) {
         <p>Cargando vehículos...</p>
         } @else if ((vehiculos()?.totalElements ?? 0) > 0) {
         <div class="catalogo-body">
-            <mat-grid-list cols="3" gutterSize="16px" rowHeight="300px">
+            <div class="grilla-vehiculos">
                 @for (v of vehiculosList(); track v.id) {
-                <mat-grid-tile>
-                    <app-vehiculo-card [vehiculo]="v" (irDetalle)="irDetalle(v.id)" />
-                </mat-grid-tile>
+                <app-vehiculo-card [vehiculo]="v" (irDetalle)="irDetalle(v.id)" />
                 }
+            </div>
 
-            </mat-grid-list>
-
-            <mat-paginator 
-            [length]="vehiculos()?.totalElements ?? 0" 
-            [pageIndex]="pageIndex()" 
+            <mat-paginator
+            [length]="vehiculos()?.totalElements ?? 0"
+            [pageIndex]="pageIndex()"
             [pageSize]="pageSize()"
-            [pageSizeOptions]="pageSizeOptions" 
+            [pageSizeOptions]="pageSizeOptions"
             showFirstLastButtons aria-label="Seleccionar página"
-            (page)="onPagina($event)" 
+            (page)="onPagina($event)"
             />
-
         </div>
-
         } @else {
         <p>No se encontraron resultados para su búsqueda.</p>
         }
-
-    </div>
+    </section>
 </div>

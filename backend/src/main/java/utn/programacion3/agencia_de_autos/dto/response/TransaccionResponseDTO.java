@@ -4,6 +4,7 @@ import lombok.*;
 import utn.programacion3.agencia_de_autos.model.enums.EstadoTransaccion;
 import utn.programacion3.agencia_de_autos.model.enums.MetodoPago;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -24,6 +25,8 @@ public class TransaccionResponseDTO {
 
     private Long vehiculo_id;
 
+    private String modelo;
+
     private String patente;
 
     private Long cliente_id;
@@ -32,5 +35,11 @@ public class TransaccionResponseDTO {
 
     private Long vendedor_id;
 
+    private String vendedor_nombre;
+
+    private String vendedor_apellido;
+
     private String vendedor_email;
+
+    private LocalDateTime fecha_visita;
 }

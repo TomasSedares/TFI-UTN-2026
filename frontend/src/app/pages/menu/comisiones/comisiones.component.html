@@ -1,0 +1,52 @@
+<main class="admin-page">
+  <header class="page-heading">
+    <div>
+      <h1>Calculadora de comisiones por vendedor</h1>
+      <p>Elegí un vendedor y un período para ver el total de comisiones generadas por sus ventas concretadas.</p>
+    </div>
+  </header>
+
+  <form class="date-filters" (ngSubmit)="calcular()">
+
+    <mat-form-field class="comisiones__vendedor" appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Vendedor</mat-label>
+      <mat-select name="vendedorId" [(ngModel)]="vendedorId">
+        @for (vendedor of vendedores(); track vendedor.id) {
+          <mat-option [value]="vendedor.id">{{ vendedor.nombre }} {{ vendedor.apellido }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Desde</mat-label>
+      <input matInput name="fechaDesde" [matDatepicker]="pickerDesde" [(ngModel)]="fechaDesde" [max]="fechaHasta">
+      <mat-datepicker-toggle matIconSuffix [for]="pickerDesde" />
+      <mat-datepicker #pickerDesde />
+    </mat-form-field>
+    
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Hasta</mat-label>
+      <input matInput name="fechaHasta" [matDatepicker]="pickerHasta" [(ngModel)]="fechaHasta" [min]="fechaDesde"
+        [max]="hoy">
+      <mat-datepicker-toggle matIconSuffix [for]="pickerHasta" />
+      <mat-datepicker #pickerHasta />
+    </mat-form-field>
+
+    <button matButton="filled" class="button-dark" type="submit" [disabled]="calculando()">
+        Calcular
+    </button>
+  </form>
+
+  @if (error()) {
+    <p class="notice error-notice" role="alert">{{ error() }}</p>
+  }
+
+  @if (calculando()) {
+    <p>Calculando comisiones…</p>
+  } @else if (tarjetaComision(); as tarjeta) {
+    <section class="comisiones__resultado">
+      <p>{{ periodo()?.desde | date:'dd/MM/yyyy' }} al {{ periodo()?.hasta | date:'dd/MM/yyyy' }}</p>
+      <app-dashboard-card [card]="tarjeta" />
+    </section>
+  }
+</main>

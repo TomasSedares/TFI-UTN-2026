@@ -1,9 +1,11 @@
 package utn.programacion3.agencia_de_autos.service;
 
 
+import utn.programacion3.agencia_de_autos.dto.request.PerfilUpdateDTO;
 import utn.programacion3.agencia_de_autos.dto.request.UsuarioRequestDTO;
 import utn.programacion3.agencia_de_autos.dto.response.UsuarioResponseDTO;
 import utn.programacion3.agencia_de_autos.model.Usuario;
+import utn.programacion3.agencia_de_autos.model.enums.Rol;
 
 import java.util.List;
 
@@ -14,15 +16,28 @@ public interface UsuarioService {
 
     List<UsuarioResponseDTO> listarTodos();
 
+    List<UsuarioResponseDTO> listarVendedores();
+
     UsuarioResponseDTO buscarPorId(Long id);
 
     Usuario buscarEntityPorId(Long id);
 
+    Usuario buscarEntityPorEmail(String email);
+
+    UsuarioResponseDTO buscarPorEmail(String email);
+
     UsuarioResponseDTO actualizarUsuario(Long id, UsuarioRequestDTO requestDTO);
 
-    UsuarioResponseDTO darDeBaja(Long id);
+    UsuarioResponseDTO obtenerPerfilActual();
+
+    UsuarioResponseDTO actualizarPerfilActual(PerfilUpdateDTO requestDTO);
+
+
+    UsuarioResponseDTO cambiarRol(Long id, Rol nuevoRol);
 
     UsuarioResponseDTO registrarVendedor(UsuarioRequestDTO registroDto);
+
+    UsuarioResponseDTO cambiarEstado(Long id, Boolean activo);
 
     void esPropioOAdmin(Usuario usuarioExistente);
 }

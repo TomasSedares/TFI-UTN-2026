@@ -44,7 +44,7 @@ export class LoginComponent {
     this.cargando.set(true);
 
     this.auth.login(this.form.getRawValue()).subscribe({
-      next: () => this.router.navigate([this.auth.isAdmin() ? '/dashboard' : '/catalogo']),
+      next: () => this.router.navigate([this.auth.isAdmin() ? '/menu/dashboard' : '/catalogo']),
       error: (err: HttpErrorResponse) => {
         this.cargando.set(false);
         this.manejarError(err);
@@ -58,7 +58,6 @@ export class LoginComponent {
       return;
     }
 
-    // Credenciales inválidas o cuenta deshabilitada: el backend devuelve 400 con un mensaje descriptivo
     this.error.set((err.error as ApiError)?.message ?? 'Email o contraseña incorrectos.');
   }
 }

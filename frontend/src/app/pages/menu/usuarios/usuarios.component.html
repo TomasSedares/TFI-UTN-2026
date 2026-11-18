@@ -1,57 +1,86 @@
-<div class="usuarios-container">
-<h2 class="usuarios__titulo">Usuarios</h2>
+<main class="admin-page">
+  <header class="page-heading">
+    <div>
+      <h1>Usuarios</h1>
+      <p>Gestión de usuarios, roles y estado</p>
+    </div>
+  </header>
 
-@if (usuarios() === undefined) {
-    <p class="usuarios_mensaje">Cargando usuarios...</p>
-}@else if (usuarios() === null){
-    <p class="usuarios_error">No se pudieron cargar los usuarios.</p>
-}@else {
-    <div class="usuarios__tabla-wrapper">
-    <table mat-table [dataSource]="usuarios()!">
+  @if (usuarios() === null) {
+  <div class="notice error-notice">No se pudieron cargar los usuarios.</div>
+  }
 
+  <section class="table-card" aria-label="Listado de usuarios">
+
+    <div class="table-scroll">
+
+      <table mat-table [dataSource]="usuarios() ?? []">
         <ng-container matColumnDef="id">
-            <th mat-header-cell *matHeaderCellDef> ID </th>
-            <td mat-cell *matCellDef="let usuario"> {{usuario.id}} </td>
+          <th mat-header-cell *matHeaderCellDef>ID</th>
+          <td mat-cell *matCellDef="let usuario">#{{ usuario.id }}</td>
         </ng-container>
+
         <ng-container matColumnDef="nombre">
-            <th mat-header-cell *matHeaderCellDef> Nombre </th>
-            <td mat-cell *matCellDef="let usuario"> {{usuario.nombre}} </td>
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let usuario">{{ usuario.nombre }}</td>
         </ng-container>
+
         <ng-container matColumnDef="apellido">
-            <th mat-header-cell *matHeaderCellDef> Apellido </th>
-            <td mat-cell *matCellDef="let usuario"> {{usuario.apellido}} </td>
+          <th mat-header-cell *matHeaderCellDef>Apellido</th>
+          <td mat-cell *matCellDef="let usuario">{{ usuario.apellido }}</td>
         </ng-container>
+
         <ng-container matColumnDef="email">
-            <th mat-header-cell *matHeaderCellDef> Email </th>
-            <td mat-cell *matCellDef="let usuario"> {{usuario.email}} </td>
+          <th mat-header-cell *matHeaderCellDef>Email</th>
+          <td mat-cell *matCellDef="let usuario">{{ usuario.email }}</td>
         </ng-container>
+
         <ng-container matColumnDef="rolUsuario">
-            <th mat-header-cell *matHeaderCellDef> Rol </th>
-            <td mat-cell *matCellDef="let usuario"> {{usuario.rolUsuario}} </td>
+          <th mat-header-cell *matHeaderCellDef>Rol</th>
+          <td mat-cell *matCellDef="let usuario">
+            <mat-select
+              class="tabla-select"
+              [value]="usuario.rolUsuario"
+              [disabled]="esUsuarioActual(usuario) || guardando().has(usuario.id)"
+              (selectionChange)="cambiarRol(usuario, $event.value)"
+              aria-label="Rol del usuario">
+              @for (rol of roles; track rol) {
+              <mat-option [value]="rol">{{ rol }}</mat-option>
+              }
+            </mat-select>
+          </td>
         </ng-container>
+
         <ng-container matColumnDef="activo">
-            <th mat-header-cell *matHeaderCellDef> Activo </th>
-            <td mat-cell *matCellDef="let usuario">
-                <span class="badge" [class.badge--activo]="usuario.activo" [class.badge--baja]="!usuario.activo">
-                    {{usuario.activo ? 'Sí' : 'No'}}
-                </span>  
-            </td>
+          <th mat-header-cell *matHeaderCellDef>Activo</th>
+          <td mat-cell *matCellDef="let usuario">
+            <mat-select
+              class="tabla-select"
+              [value]="usuario.activo"
+              [disabled]="esUsuarioActual(usuario) || guardando().has(usuario.id)"
+              (selectionChange)="cambiarEstado(usuario, $event.value)"
+              aria-label="Estado del usuario">
+              @for (estado of estados; track estado) {
+              <mat-option [value]="estado">{{ estado ? 'Sí' : 'No' }}</mat-option>
+              }
+            </mat-select>
+          </td>
         </ng-container>
+
         <ng-container matColumnDef="alta">
-            <th mat-header-cell *matHeaderCellDef> Alta </th>
-            <td mat-cell *matCellDef="let usuario"> {{usuario.alta | date: 'dd/MM/yyyy'}} </td>
-        </ng-container>
-        <ng-container matColumnDef="acciones">
-            <th mat-header-cell *matHeaderCellDef> Acciones </th>
-            <td mat-cell *matCellDef="let usuario">
-                <button mat-button color="primary">Editar</button>
-                <button mat-button color="warn">Eliminar</button>
-            </td>
+          <th mat-header-cell *matHeaderCellDef>Alta</th>
+          <td mat-cell *matCellDef="let usuario">{{ usuario.alta | date: 'dd/MM/yyyy' }}</td>
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="columnas"></tr>
-        <tr mat-row *matRowDef="let row; columns: columnas;"></tr>
-    </table>
+        <tr mat-row *matRowDef="let fila; columns: columnas"></tr>
+      </table>
     </div>
-}
-</div>
+
+    @if (usuarios() === undefined) {
+    <p class="table-status">Cargando usuarios…</p>
+    } @else if (usuarios()?.length === 0) {
+    <p class="table-status">No hay usuarios cargados.</p>
+    }
+  </section>
+</main>

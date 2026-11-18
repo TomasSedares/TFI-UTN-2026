@@ -46,9 +46,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         // EXTRAER EL TOKEN DE LA CABECERA (Cortamos los primeros 7 caracteres: "Bearer ")
         jwt = authHeader.substring(7);
-
-        // Usamos nuestro JwtService para sacar el email de adentro del token
-        userEmail = jwtService.extraerUsername(jwt);
+        try {
+            userEmail = jwtService.extraerUsername(jwt);
+        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
+            filterChain.doFilter(request,response);
+            return;
+        }
 
         //SI EL EMAIL ES VÁLIDO Y EL USUARIO NO ESTÁ AUTENTICADO TODAVÍA EN EL CONTEXTO DE SPRING
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -57,7 +60,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
             //SI EL TOKEN ES VÁLIDO EN TODAS SUS REGLAS
-            if (jwtService.esTokenValido(jwt, userDetails)) {
+            if (userDetails.isEnabled() && jwtService.esTokenValido(jwt, userDetails)) {
 
                 // Creamos el objeto de autenticación que Spring Security entiende
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(

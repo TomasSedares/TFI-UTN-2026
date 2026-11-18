@@ -5,54 +5,66 @@
 
   <span class="navbar__spacer"></span>
 
-  <nav class="navbar__links">
-    @if (!auth.isLoggedIn()) {
-      <a mat-button routerLink="/catalogo" routerLinkActive="navbar__link--active"
-        [routerLinkActiveOptions]="{ exact: true }">
-        Catálogo
-      </a>
-      <a mat-button routerLink="/login" routerLinkActive="navbar__link--active"
-        [routerLinkActiveOptions]="{ exact: true }">
-        Iniciar sesión
-      </a>
-      <a mat-stroked-button routerLink="/registro" routerLinkActive="navbar__link--active"
-        [routerLinkActiveOptions]="{ exact: true }">
-        Registrarse
-      </a>
-    } @else if (auth.isAdmin()) {
-      <a mat-button routerLink="/menu/dashboard" routerLinkActive="navbar__link--active"
-        [routerLinkActiveOptions]="{ exact: true }">
-        Menu
-      </a>
-      <a mat-button routerLink="/catalogo" routerLinkActive="navbar__link--active"
-        [routerLinkActiveOptions]="{ exact: true }">
-        Catalogo
-      </a>
-      <a mat-button routerLink="/perfil" routerLinkActive="navbar__link--active"
-        [routerLinkActiveOptions]="{ exact: true }">
-        Perfil
-      </a>
-      <button mat-stroked-button type="button" (click)="cerrarSesion()">
+  <div class="navbar__links">
+    <nav mat-tab-nav-bar class="navbar__tabs" [tabPanel]="tabPanel">
+      @if (!auth.isLoggedIn()) {
+        <a mat-tab-link routerLink="/catalogo" routerLinkActive #catalogo="routerLinkActive"
+          [routerLinkActiveOptions]="{ exact: true }" [active]="catalogo.isActive" aria-label="Catálogo">
+          <mat-icon class="navbar__icon" fontIcon="directions_car"></mat-icon>
+          <span class="navbar__label">Catálogo</span>
+        </a>
+        <a mat-tab-link routerLink="/login" routerLinkActive #login="routerLinkActive"
+          [routerLinkActiveOptions]="{ exact: true }" [active]="login.isActive" aria-label="Iniciar sesión">
+          <mat-icon class="navbar__icon" fontIcon="login"></mat-icon>
+          <span class="navbar__label">Iniciar sesión</span>
+        </a>
+        <a mat-tab-link routerLink="/registro" routerLinkActive #registro="routerLinkActive"
+          [routerLinkActiveOptions]="{ exact: true }" [active]="registro.isActive" aria-label="Registrarse">
+          <mat-icon class="navbar__icon" fontIcon="person_add"></mat-icon>
+          <span class="navbar__label">Registrarse</span>
+        </a>
+      } @else if (auth.isAdmin() || auth.isVendedor()) {
+        <a mat-tab-link routerLink="/menu/dashboard" routerLinkActive #menu="routerLinkActive"
+          [active]="menu.isActive" aria-label="Menú">
+          <mat-icon class="navbar__icon" fontIcon="menu"></mat-icon>
+          <span class="navbar__label">Menú</span>
+        </a>
+        <a mat-tab-link routerLink="/catalogo" routerLinkActive #catalogo="routerLinkActive"
+          [routerLinkActiveOptions]="{ exact: true }" [active]="catalogo.isActive" aria-label="Catálogo">
+          <mat-icon class="navbar__icon" fontIcon="directions_car"></mat-icon>
+          <span class="navbar__label">Catálogo</span>
+        </a>
+        <a mat-tab-link routerLink="/perfil" routerLinkActive #perfil="routerLinkActive"
+          [routerLinkActiveOptions]="{ exact: true }" [active]="perfil.isActive" aria-label="Perfil">
+          <mat-icon class="navbar__icon" fontIcon="person"></mat-icon>
+          <span class="navbar__label">Perfil</span>
+        </a>
+      } @else {
+        <a mat-tab-link routerLink="/catalogo" routerLinkActive #catalogo="routerLinkActive"
+          [routerLinkActiveOptions]="{ exact: true }" [active]="catalogo.isActive" aria-label="Catálogo">
+          <mat-icon class="navbar__icon" fontIcon="directions_car"></mat-icon>
+          <span class="navbar__label">Catálogo</span>
+        </a>
+        <a mat-tab-link routerLink="/perfil" routerLinkActive #perfil="routerLinkActive"
+          [routerLinkActiveOptions]="{ exact: true }" [active]="perfil.isActive" aria-label="Perfil">
+          <mat-icon class="navbar__icon" fontIcon="person"></mat-icon>
+          <span class="navbar__label">Perfil</span>
+        </a>
+        <a mat-tab-link routerLink="/tramites" routerLinkActive #tramites="routerLinkActive"
+          [routerLinkActiveOptions]="{ exact: true }" [active]="tramites.isActive" aria-label="Trámites">
+          <mat-icon class="navbar__icon" fontIcon="description"></mat-icon>
+          <span class="navbar__label">Trámites</span>
+        </a>
+      }
+    </nav>
+    <mat-tab-nav-panel #tabPanel></mat-tab-nav-panel>
+
+    @if (auth.isLoggedIn()) {
+      <button mat-button type="button" class="navbar__logout" (click)="cerrarSesion()"
+        aria-label="Cerrar sesión">
         <mat-icon fontIcon="logout"></mat-icon>
-        Cerrar sesión
-      </button>
-    } @else {
-      <a mat-button routerLink="/menu" routerLinkActive="navbar__link--active"
-        [routerLinkActiveOptions]="{ exact: true }">
-        Menu
-      </a>
-      <a mat-button routerLink="/perfil" routerLinkActive="navbar__link--active"
-        [routerLinkActiveOptions]="{ exact: true }">
-        Perfil
-      </a>
-      <a mat-button routerLink="/tramites" routerLinkActive="navbar__link--active"
-        [routerLinkActiveOptions]="{ exact: true }">
-        Trámites
-      </a>
-      <button mat-stroked-button type="button" (click)="cerrarSesion()">
-        <mat-icon fontIcon="logout"></mat-icon>
-        Cerrar sesión
+        <span class="navbar__label">Cerrar sesión</span>
       </button>
     }
-  </nav>
+  </div>
 </mat-toolbar>
