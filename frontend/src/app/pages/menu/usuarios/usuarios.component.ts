@@ -18,7 +18,7 @@ export class UsuariosComponent {
   private readonly snackBar = inject(MatSnackBar);
   readonly auth = inject(AuthService);
 
-  readonly columnas = ['id', 'nombre', 'apellido', 'email', 'rolUsuario', 'activo', 'alta'];
+  readonly columnas = ['nombre', 'apellido', 'email', 'rolUsuario', 'activo', 'alta'];
   readonly roles = Object.values(ROL);
   readonly estados = [true, false];
 

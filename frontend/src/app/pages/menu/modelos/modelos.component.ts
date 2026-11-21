@@ -40,7 +40,7 @@ export class ModelosComponent {
   private readonly auth = inject(AuthService);
 
   protected readonly isAdmin = this.auth.isAdmin;
-  protected readonly columnas = ['id', 'nombre', 'marca', 'anio', 'tipo', 'activo', 'acciones'];
+  protected readonly columnas = ['nombre', 'marca', 'anio', 'tipo', 'activo', 'acciones'];
 
   readonly modelos = signal<Modelo[]>([]);
   readonly marcas = signal<Marca[]>([]);

@@ -89,7 +89,7 @@ export class TransaccionesComponent {
   protected readonly etiquetaMetodoPago = ETIQUETA_METODO_PAGO;
   protected readonly estados = signal<EstadoTransaccion[]>(Object.values(EstadoTransaccion));
   protected readonly metodosPago = signal<MetodoPago[]>(Object.values(MetodoPago));
-  protected readonly columnas = ['id', 'vehiculo', 'cliente', 'vendedor', 'estado', 'precio', 'acciones'];
+  protected readonly columnas = ['vehiculo', 'cliente', 'vendedor', 'estado', 'precio', 'acciones'];
 
   readonly transacciones = signal<Pagina<Transaccion> | null>(null);
   readonly cargando = signal(false);

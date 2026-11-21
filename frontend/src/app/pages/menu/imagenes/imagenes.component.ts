@@ -42,7 +42,7 @@ export class ImagenesComponent {
   private readonly vehiculoService = inject(VehiculoService);
   private readonly dialog = inject(MatDialog);
 
-  protected readonly columnas = ['id', 'imagen', 'principal', 'acciones'];
+  protected readonly columnas = ['imagen', 'principal', 'acciones'];
 
   readonly imagenes = signal<Imagen[]>([]);
   readonly vehiculos = signal<VehiculoGestion[]>([]);

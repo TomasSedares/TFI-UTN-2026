@@ -75,7 +75,7 @@ export class HistorialTransaccionesComponent {
   protected readonly metodosPago = Object.values(MetodoPago);
   protected readonly etiquetaEstado = ETIQUETA_ESTADO;
   protected readonly etiquetaMetodoPago = ETIQUETA_METODO_PAGO;
-  protected readonly columnas = ['id', 'fecha', 'transaccion', 'vendedor', 'estado', 'precio', 'metodoPago'];
+  protected readonly columnas = ['fecha', 'transaccion', 'vendedor', 'estado', 'precio', 'metodoPago'];
   protected readonly pageSize = 10;
 
   protected readonly auditorias = signal<Pagina<AuditoriaTransaccion> | null>(null);

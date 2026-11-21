@@ -18,11 +18,6 @@
     <div class="table-scroll">
 
       <table mat-table [dataSource]="vehiculos()?.content ?? []">
-        <ng-container matColumnDef="id">
-          <th mat-header-cell *matHeaderCellDef>ID</th>
-          <td mat-cell *matCellDef="let vehiculo">#{{ vehiculo.id }}</td>
-        </ng-container>
-
         <ng-container matColumnDef="patente">
           <th mat-header-cell *matHeaderCellDef>Patente</th>
           <td mat-cell *matCellDef="let vehiculo">{{ vehiculo.patente }}</td>

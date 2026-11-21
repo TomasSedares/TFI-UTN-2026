@@ -49,7 +49,7 @@ export class VehiculosComponent {
   private readonly auth = inject(AuthService);
 
   protected readonly isAdmin = this.auth.isAdmin;
-  protected readonly columnas = ['id', 'patente', 'vehiculo', 'anio', 'precioVenta', 'estado', 'acciones'];
+  protected readonly columnas = ['patente', 'vehiculo', 'anio', 'precioVenta', 'estado', 'acciones'];
 
   readonly vehiculos = signal<Pagina<VehiculoGestion> | null>(null);
   readonly marcas = signal<Marca[]>([]);

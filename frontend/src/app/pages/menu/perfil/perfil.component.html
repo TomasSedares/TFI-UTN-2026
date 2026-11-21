@@ -17,15 +17,7 @@
     </div>
   } @else {
     <div class="perfil__card">
-      <dl class="perfil__meta">
-        <div class="perfil__meta-item">
-          <dt>Rol</dt>
-          <dd>{{ usuario()?.rolUsuario }}</dd>
-        </div>
-        <div class="perfil__meta-item">
-          <dt>Estado</dt>
-          <dd>{{ usuario()?.activo ? 'Activo' : 'Inactivo' }}</dd>
-        </div>
+      <dl class="perfil__meta"> 
         <div class="perfil__meta-item">
           <dt>Miembro desde</dt>
           <dd>{{ usuario()?.alta }}</dd>

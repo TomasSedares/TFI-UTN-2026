@@ -37,7 +37,7 @@ export class MarcasComponent {
   private readonly auth = inject(AuthService);
 
   protected readonly isAdmin = this.auth.isAdmin;
-  protected readonly columnas = ['id', 'nombre', 'activo', 'acciones'];
+  protected readonly columnas = ['nombre', 'activo', 'acciones'];
 
   readonly marcas = signal<Marca[]>([]);
   readonly cargando = signal(false);
