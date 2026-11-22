@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import utn.programacion3.agencia_de_autos.dto.request.ModeloRequestDTO;
 import utn.programacion3.agencia_de_autos.dto.response.ModeloResponseDTO;
+import utn.programacion3.agencia_de_autos.exception.NegocioException;
 import utn.programacion3.agencia_de_autos.mapper.ModeloMapper;
 import utn.programacion3.agencia_de_autos.model.Marca;
 import utn.programacion3.agencia_de_autos.model.Modelo;
@@ -26,6 +27,13 @@ public class ModeloService {
 
         Marca marca = marcaRepository.findById(request.getMarcaId())
                 .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
+
+        if (modeloRepository.existsByMarcaIdAndNombreIgnoreCaseAndTipoModelo(
+                marca.getId(), request.getNombre().trim(), request.getTipoModelo())) {
+            throw new NegocioException("Ya existe el modelo " + request.getNombre().trim()
+                    + " (" + request.getTipoModelo() + ") para la marca " + marca.getNombre()
+                    + ". El año se carga en cada vehículo, no hace falta repetir el modelo.");
+        }
 
         Modelo modelo = modeloMapper.toEntity(request);
 
@@ -68,6 +76,12 @@ public class ModeloService {
 
         Marca marca = marcaRepository.findById(request.getMarcaId())
                 .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
+
+        if (modeloRepository.existsByMarcaIdAndNombreIgnoreCaseAndTipoModeloAndIdNot(
+                marca.getId(), request.getNombre().trim(), request.getTipoModelo(), id)) {
+            throw new NegocioException("Ya existe el modelo " + request.getNombre().trim()
+                    + " (" + request.getTipoModelo() + ") para la marca " + marca.getNombre() + ".");
+        }
 
         modelo.setNombre(request.getNombre());
         modelo.setMarca(marca);
