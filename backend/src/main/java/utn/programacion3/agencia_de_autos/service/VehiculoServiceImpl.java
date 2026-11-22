@@ -8,6 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import utn.programacion3.agencia_de_autos.dto.request.*;
@@ -55,6 +56,8 @@ public class VehiculoServiceImpl implements VehiculoService {
         Modelo modelo = modeloRepository.findById(request.getModeloId())
                 .orElseThrow(ModeloNoEncontradoException::new);
 
+        validarModeloYMarcaActivos(modelo);
+
         Vehiculo vehiculo = vehiculoMapper.toEntity(request);
 
         vehiculo.setModelo(modelo);
@@ -62,6 +65,17 @@ public class VehiculoServiceImpl implements VehiculoService {
         Vehiculo vehiculoGuardado = vehiculoRepository.save(vehiculo);
 
         return vehiculoMapper.toResponse(vehiculoGuardado);
+    }
+
+    private void validarModeloYMarcaActivos(Modelo modelo) {
+        if (!Boolean.TRUE.equals(modelo.getMarca().getActivo())) {
+            throw new NegocioException("No se pueden cargar vehículos de la marca "
+                    + modelo.getMarca().getNombre() + " porque está inactiva.");
+        }
+        if (!Boolean.TRUE.equals(modelo.getActivo())) {
+            throw new NegocioException("No se pueden cargar vehículos del modelo "
+                    + modelo.getNombre() + " porque está inactivo.");
+        }
     }
 
     @Override
@@ -137,6 +151,11 @@ public class VehiculoServiceImpl implements VehiculoService {
         Modelo modelo = modeloRepository.findById(request.getModeloId())
                 .orElseThrow(ModeloNoEncontradoException::new);
 
+        // Editar un vehículo que ya tenía un modelo inactivo está permitido; asignarle uno inactivo no
+        if (!modelo.getId().equals(vehiculo.getModelo().getId())) {
+            validarModeloYMarcaActivos(modelo);
+        }
+
         vehiculo.setPatente(request.getPatente());
         vehiculo.setAnio(request.getAnio());
         vehiculo.setPrecioAdquisicion(request.getPrecioAdquisicion());
@@ -182,6 +201,11 @@ public class VehiculoServiceImpl implements VehiculoService {
     @Transactional(readOnly = true)
     public Page<VehiculoResponseDTO> buscarConFiltros(VehiculoFilterDTO filtros, Pageable pageable) {
 
+        // Los vehículos vendidos solo los ve el personal de la agencia; el catálogo público nunca los muestra
+        if (!esPersonalDeLaAgencia()) {
+            filtros.setIncluirVendidos(false);
+        }
+
         return vehiculoRepository.findAll(VehiculoSpecification.conFiltros(filtros), pageable)
                 .map(vehiculo -> {
                     VehiculoResponseDTO dto = vehiculoMapper.toResponse(vehiculo);
@@ -190,6 +214,17 @@ public class VehiculoServiceImpl implements VehiculoService {
                     );
                     return dto;
                 });
+    }
+
+    private boolean esPersonalDeLaAgencia() {
+        Authentication autenticacion = SecurityContextHolder.getContext().getAuthentication();
+        if (autenticacion == null || autenticacion instanceof AnonymousAuthenticationToken) {
+            return false;
+        }
+        return autenticacion.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(rol -> rol.equals("ROLE_" + Rol.VENDEDOR.name())
+                        || rol.equals("ROLE_" + Rol.ADMINISTRADOR.name()));
     }
 
     @Override
@@ -264,6 +299,7 @@ public class VehiculoServiceImpl implements VehiculoService {
 
         return vehiculoRepository.findAll(pageable)
                 .stream()
+                .filter(vehiculo -> vehiculo.getEstado() != EstadoVehiculo.VENDIDO)
                 .map(vehiculoMapper::toResponse)
                 .toList();
     }

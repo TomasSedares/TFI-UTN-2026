@@ -14,6 +14,7 @@ import utn.programacion3.agencia_de_autos.exception.InvalidPasswordException;
 import utn.programacion3.agencia_de_autos.exception.ResourceNotFoundException;
 import utn.programacion3.agencia_de_autos.mapper.UsuarioMapper;
 import utn.programacion3.agencia_de_autos.model.Usuario;
+import utn.programacion3.agencia_de_autos.model.enums.AccionUsuario;
 import utn.programacion3.agencia_de_autos.model.enums.Rol;
 import utn.programacion3.agencia_de_autos.repository.UsuarioRepository;
 import org.springframework.security.access.AccessDeniedException;
@@ -28,13 +29,15 @@ public class UsuarioServiceImpl implements UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final UsuarioMapper usuarioMapper;
     private final PasswordEncoder passwordEncoder;
+    private final AuditoriaUsuarioService auditoriaUsuarioService;
 
     // Inyección por constructor (Buenas prácticas de Spring)
     public UsuarioServiceImpl(UsuarioRepository usuarioRepository, UsuarioMapper usuarioMapper,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder, AuditoriaUsuarioService auditoriaUsuarioService) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioMapper = usuarioMapper;
         this.passwordEncoder = passwordEncoder;
+        this.auditoriaUsuarioService = auditoriaUsuarioService;
     }
 
     @Override
@@ -51,6 +54,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         usuario.setRolUsuario(Rol.USUARIO);
 
         Usuario usuarioGuardado = usuarioRepository.save(usuario);
+        auditoriaUsuarioService.registrar(usuarioGuardado, AccionUsuario.ALTA);
 
         return usuarioMapper.toResponseDTO(usuarioGuardado);
     }
@@ -192,8 +196,14 @@ public class UsuarioServiceImpl implements UsuarioService {
             throw new NegocioException("No podés desactivar tu propia cuenta.");
         }
 
+        boolean estabaActivo = usuario.isActivo();
         usuario.setActivo(activo);
         usuarioRepository.save(usuario);
+        if (estabaActivo && !activo) {
+            auditoriaUsuarioService.registrar(usuario, AccionUsuario.BAJA);
+        } else if (!estabaActivo && activo) {
+            auditoriaUsuarioService.registrar(usuario, AccionUsuario.REACTIVACION);
+        }
         return usuarioMapper.toResponseDTO(usuario);
     }
 
@@ -205,6 +215,7 @@ public class UsuarioServiceImpl implements UsuarioService {
 
         usuario.setRolUsuario(nuevoRol);
         Usuario guardado = usuarioRepository.save(usuario);
+        auditoriaUsuarioService.registrar(guardado, AccionUsuario.CAMBIO_ROL);
 
         return usuarioMapper.toResponseDTO(guardado);
     }
@@ -226,6 +237,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         nuevoVendedor.setRolUsuario(Rol.VENDEDOR);
 
         Usuario vendedorGuardado = usuarioRepository.save(nuevoVendedor);
+        auditoriaUsuarioService.registrar(vendedorGuardado, AccionUsuario.ALTA);
 
         return usuarioMapper.toResponseDTO(vendedorGuardado);
     }

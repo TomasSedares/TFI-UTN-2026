@@ -1,7 +1,6 @@
 package utn.programacion3.agencia_de_autos.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -17,9 +16,7 @@ public class TransaccionRequestDTO {
     @NotBlank(groups = {Groups.Actualizar.class}, message = "Las observaciones no puede estar vacias")
     private String observaciones;
 
-    @Schema(description = "Precio final acordado en la transacción", example = "11500000.00", minimum = "0.01")
-    @NotNull(groups = {Groups.Crear.class, Groups.Actualizar.class}, message = "El precio final no puede estar vacio")
-    @DecimalMin(value = "0.01", message = "El precio final debe ser mayor a 0")
+    @Schema(description = "Opcional: el servidor siempre fija el precio final con el precio de venta del vehículo", example = "11500000.00")
     private BigDecimal precio_final;
 
     @Schema(description = "Método de pago utilizado en la transacción", example = "EFECTIVO",

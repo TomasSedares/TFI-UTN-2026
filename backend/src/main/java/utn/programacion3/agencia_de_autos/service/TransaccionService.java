@@ -6,10 +6,14 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import utn.programacion3.agencia_de_autos.dto.request.AsignarVisitaRequestDTO;
+import utn.programacion3.agencia_de_autos.dto.request.PagoRequestDTO;
+import utn.programacion3.agencia_de_autos.dto.request.RegistrarPagosRequestDTO;
 import utn.programacion3.agencia_de_autos.dto.request.SolicitudTransaccionRequestDTO;
 import utn.programacion3.agencia_de_autos.dto.request.TransaccionFilterDTO;
 import utn.programacion3.agencia_de_autos.dto.request.TransaccionRequestDTO;
+import utn.programacion3.agencia_de_autos.dto.response.PagoResponseDTO;
 import utn.programacion3.agencia_de_autos.dto.response.TransaccionBalanceResponseDTO;
+import utn.programacion3.agencia_de_autos.dto.response.VentaComisionResponseDTO;
 import utn.programacion3.agencia_de_autos.dto.response.TransaccionComisionResponseDTO;
 import utn.programacion3.agencia_de_autos.dto.response.TransaccionResponseDTO;
 import utn.programacion3.agencia_de_autos.exception.NegocioException;
@@ -19,17 +23,23 @@ import utn.programacion3.agencia_de_autos.exception.VehiculoNoDisponibleExceptio
 import utn.programacion3.agencia_de_autos.mapper.SolicitudTransaccionMapper;
 import utn.programacion3.agencia_de_autos.mapper.TransaccionMapper;
 import utn.programacion3.agencia_de_autos.model.BalanceProyeccion;
+import utn.programacion3.agencia_de_autos.model.PagoTransaccion;
 import utn.programacion3.agencia_de_autos.model.Transaccion;
 import utn.programacion3.agencia_de_autos.model.Usuario;
 import utn.programacion3.agencia_de_autos.model.Vehiculo;
 import utn.programacion3.agencia_de_autos.model.enums.EstadoTransaccion;
 import utn.programacion3.agencia_de_autos.model.enums.EstadoVehiculo;
 import utn.programacion3.agencia_de_autos.model.enums.Rol;
+import utn.programacion3.agencia_de_autos.model.enums.TipoPago;
+import utn.programacion3.agencia_de_autos.repository.PagoTransaccionRepository;
 import utn.programacion3.agencia_de_autos.repository.TransaccionRepository;
 import utn.programacion3.agencia_de_autos.repository.TransaccionSpecification;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
 @Service
@@ -42,7 +52,12 @@ public class TransaccionService {
     private final UsuarioService usuarioService;
     private final VehiculoServiceImpl vehiculoService;
     private final AuditoriaTransaccionService auditoriaTransaccionService;
+    private final PagoTransaccionRepository pagoTransaccionRepository;
 
+    // Reglas de negocio de visitas y reservas
+    public static final int MAXIMO_VISITAS_POR_SEMANA = 3;
+    public static final int DIAS_PARA_CONCRETAR = 7;
+    public static final int DIAS_MAXIMOS_HASTA_LA_VISITA = 14;
 
     public static final BigDecimal comision_vendedores = new BigDecimal("0.05");   // 5%
 
@@ -51,9 +66,31 @@ public class TransaccionService {
     }
 
 
+    @Transactional(readOnly = true)
     public Page<TransaccionResponseDTO> listarConFiltros(TransaccionFilterDTO filtros, Pageable pageable) {
         return transaccionRepository.findAll(TransaccionSpecification.conFiltros(filtros), pageable)
-                .map(transaccionMapper::toResponseDTO);
+                .map(this::aRespuesta);
+    }
+
+    // Mapea la transacción y le agrega los pagos registrados y el total pagado
+    private TransaccionResponseDTO aRespuesta(Transaccion transaccion) {
+        TransaccionResponseDTO respuesta = transaccionMapper.toResponseDTO(transaccion);
+        List<PagoTransaccion> pagosRegistrados = pagoTransaccionRepository
+                .findByTransaccionIdOrderByIdAsc(transaccion.getId());
+
+        respuesta.setPagos(pagosRegistrados.stream()
+                .map(pago -> PagoResponseDTO.builder()
+                        .id(pago.getId())
+                        .metodoPago(pago.getMetodoPago())
+                        .monto(pago.getMonto())
+                        .tipo(pago.getTipo())
+                        .fecha(pago.getFecha())
+                        .build())
+                .toList());
+        respuesta.setTotal_pagado(pagosRegistrados.stream()
+                .map(PagoTransaccion::getMonto)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+        return respuesta;
     }
 
 
@@ -71,13 +108,16 @@ public class TransaccionService {
         transaccion.setCliente(cliente);
         transaccion.setVehiculo(vehiculo);
         transaccion.setVendedor(vendedor);
+        // El precio de la transacción siempre es el precio de venta del vehículo
+        transaccion.setPrecio_final(vehiculo.getPrecioVenta());
+        transaccion.setFecha_reserva(LocalDateTime.now());
 
         vehiculoService.cambiarEstadoEntity(dto.getVehiculo_id(), EstadoVehiculo.RESERVADO);
         Transaccion transaccionGuardada = transaccionRepository.save(transaccion);
         auditoriaTransaccionService.registrarCreacion(transaccionGuardada);
         cancelarOtrasSolicitudes(transaccionGuardada);
 
-        return transaccionMapper.toResponseDTO(transaccionGuardada);
+        return aRespuesta(transaccionGuardada);
     }
 
     @Transactional
@@ -99,7 +139,7 @@ public class TransaccionService {
         Transaccion solicitudGuardada = transaccionRepository.save(solicitud);
         auditoriaTransaccionService.registrarCreacion(solicitudGuardada);
 
-        return transaccionMapper.toResponseDTO(solicitudGuardada);
+        return aRespuesta(solicitudGuardada);
     }
 
     @Transactional
@@ -115,13 +155,31 @@ public class TransaccionService {
         if (transaccion.getVendedor() != null && !transaccion.getVendedor().getId().equals(vendedor.getId()))
             throw new NegocioException("La solicitud ya está asignada a otro vendedor");
 
+        if (dto.getFechaVisita() != null
+                && dto.getFechaVisita().isAfter(LocalDateTime.now().plusDays(DIAS_MAXIMOS_HASTA_LA_VISITA)))
+            throw new NegocioException("La visita no puede agendarse con más de "
+                    + DIAS_MAXIMOS_HASTA_LA_VISITA + " días de anticipación");
+
+        // Solo la primera asignación cuenta para el límite semanal; reprogramar no suma
+        if (transaccion.getVendedor() == null) {
+            LocalDateTime inicioDeSemana = LocalDate.now()
+                    .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                    .atStartOfDay();
+            long asignacionesDeLaSemana = transaccionRepository
+                    .contarAsignacionesDesde(vendedor.getId(), inicioDeSemana);
+            if (asignacionesDeLaSemana >= MAXIMO_VISITAS_POR_SEMANA)
+                throw new NegocioException("Ya tenés " + MAXIMO_VISITAS_POR_SEMANA
+                        + " solicitudes asignadas esta semana. Probá de nuevo la semana próxima");
+            transaccion.setFecha_asignacion(LocalDateTime.now());
+        }
+
         transaccion.setVendedor(vendedor);
         if (dto.getFechaVisita() != null)
             transaccion.setFecha_visita(dto.getFechaVisita());
 
         auditoriaTransaccionService.registrarCambio(snapshotAnterior, transaccion);
 
-        return transaccionMapper.toResponseDTO(transaccionRepository.save(transaccion));
+        return aRespuesta(transaccionRepository.save(transaccion));
     }
 
     @Transactional
@@ -143,6 +201,11 @@ public class TransaccionService {
         transaccion.setVehiculo(vehiculo);
 
         EstadoTransaccion nuevoEstado = dto.getEstadoTransaccion();
+        transaccion.setPrecio_final(vehiculo.getPrecioVenta());
+
+        if ((nuevoEstado == EstadoTransaccion.SENIADO || nuevoEstado == EstadoTransaccion.VENDIDO)
+                && nuevoEstado != snapshotAnterior.getEstadoTransaccion())
+            throw new NegocioException("La seña y la venta se registran con sus pagos (métodos y montos)");
 
         if (nuevoEstado != snapshotAnterior.getEstadoTransaccion()) {
             if (snapshotAnterior.getEstadoTransaccion() == EstadoTransaccion.CANCELADO)
@@ -160,14 +223,14 @@ public class TransaccionService {
 
         auditoriaTransaccionService.registrarCambio(snapshotAnterior, transaccion);
 
-        return transaccionMapper.toResponseDTO(transaccionRepository.save(transaccion));
+        return aRespuesta(transaccionRepository.save(transaccion));
     }
 
 
     @Transactional(readOnly = true)
     public List<TransaccionResponseDTO> listarPorCliente(String emailCliente) {
         return transaccionRepository.findByClienteEmailOrderByIdDesc(emailCliente).stream()
-                .map(transaccionMapper::toResponseDTO)
+                .map(this::aRespuesta)
                 .toList();
     }
 
@@ -175,7 +238,7 @@ public class TransaccionService {
     public TransaccionResponseDTO buscarPorId(Long id) {
         Transaccion transaccion = transaccionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaccion no encontrado con el ID: " + id));
-        return transaccionMapper.toResponseDTO(transaccion);
+        return aRespuesta(transaccion);
     }
 
     @Transactional(readOnly = true)
@@ -184,28 +247,123 @@ public class TransaccionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Transaccion no encontrado con el ID: " + id));
     }
 
+    // Cambios de estado simples (cancelar). Señar y vender pasan por sus propios métodos con pagos
     @Transactional
-    public TransaccionResponseDTO cambiarEstado(Long id, EstadoTransaccion estadoTransaccion, BigDecimal precioFinal) {
+    public TransaccionResponseDTO cambiarEstado(Long id, EstadoTransaccion estadoTransaccion) {
+
+        if (estadoTransaccion == EstadoTransaccion.SENIADO || estadoTransaccion == EstadoTransaccion.VENDIDO)
+            throw new NegocioException("La seña y la venta se registran con sus pagos (métodos y montos)");
 
         Transaccion transaccion = buscarEntityPorId(id);
         Transaccion snapshotAnterior = crearSnapshot(transaccion);
 
-        // Falta validar que solo lo pueda realizar un vendedor o Admin
         if (transaccion.getEstadoTransaccion() == EstadoTransaccion.CANCELADO) {
             throw new TransaccionNoModificableException(transaccion.getId().toString());
         }
 
         asignacionCambioDeEstado(transaccion, estadoTransaccion);
-        if (precioFinal != null ){
-            // IMPORTANTE: LE QUE SE RECIBE SE SUMA O SE REEMPLAZA?
-            transaccion.setPrecio_final(precioFinal);
-        }
 
         auditoriaTransaccionService.registrarCambio(snapshotAnterior, transaccion);
 
-        return transaccionMapper.toResponseDTO(
-                transaccionRepository.save(transaccion)
-        );
+        return aRespuesta(transaccionRepository.save(transaccion));
+    }
+
+    // Registra una seña: uno o varios pagos cuya suma no puede superar lo que falta abonar del vehículo
+    @Transactional
+    public TransaccionResponseDTO registrarSenia(Long id, RegistrarPagosRequestDTO dto) {
+
+        Transaccion transaccion = buscarEntityPorId(id);
+        validarQuePuedeRecibirPagos(transaccion, "señar");
+
+        BigDecimal precioVehiculo = transaccion.getVehiculo().getPrecioVenta();
+        BigDecimal montoNuevo = sumarMontos(dto);
+        BigDecimal faltaAbonar = precioVehiculo.subtract(pagoTransaccionRepository.sumarMontosPorTransaccion(id));
+
+        if (montoNuevo.compareTo(faltaAbonar) > 0)
+            throw new NegocioException("Los pagos suman $" + montoNuevo.toPlainString()
+                    + " y solo faltan abonar $" + faltaAbonar.toPlainString() + " del vehículo");
+
+        Transaccion snapshotAnterior = crearSnapshot(transaccion);
+        guardarPagos(transaccion, dto, TipoPago.SENIA);
+
+        transaccion.setPrecio_final(precioVehiculo);
+        transaccion.setMetodoPago(dto.getPagos().get(0).getMetodoPago());
+        transaccion.setEstadoTransaccion(EstadoTransaccion.SENIADO);
+
+        auditoriaTransaccionService.registrarCambio(snapshotAnterior, transaccion);
+
+        return aRespuesta(transaccionRepository.save(transaccion));
+    }
+
+    // Concreta la venta: los pagos nuevos más lo ya señado tienen que cubrir exactamente el precio del vehículo
+    @Transactional
+    public TransaccionResponseDTO registrarVenta(Long id, RegistrarPagosRequestDTO dto) {
+
+        Transaccion transaccion = buscarEntityPorId(id);
+        validarQuePuedeRecibirPagos(transaccion, "vender");
+
+        BigDecimal precioVehiculo = transaccion.getVehiculo().getPrecioVenta();
+        BigDecimal montoNuevo = sumarMontos(dto);
+        BigDecimal faltaAbonar = precioVehiculo.subtract(pagoTransaccionRepository.sumarMontosPorTransaccion(id));
+
+        if (montoNuevo.compareTo(faltaAbonar) != 0)
+            throw new NegocioException("Para concretar la venta hay que abonar exactamente $"
+                    + faltaAbonar.toPlainString() + " y los pagos suman $" + montoNuevo.toPlainString());
+
+        Transaccion snapshotAnterior = crearSnapshot(transaccion);
+        guardarPagos(transaccion, dto, TipoPago.VENTA);
+
+        transaccion.setPrecio_final(precioVehiculo);
+        transaccion.setMetodoPago(dto.getPagos().get(0).getMetodoPago());
+        transaccion.setFecha_venta(LocalDate.now());
+        asignacionCambioDeEstado(transaccion, EstadoTransaccion.VENDIDO);
+
+        auditoriaTransaccionService.registrarCambio(snapshotAnterior, transaccion);
+
+        return aRespuesta(transaccionRepository.save(transaccion));
+    }
+
+    private void validarQuePuedeRecibirPagos(Transaccion transaccion, String accion) {
+        EstadoTransaccion estado = transaccion.getEstadoTransaccion();
+        if (estado != EstadoTransaccion.RESERVA && estado != EstadoTransaccion.SENIADO)
+            throw new TransaccionNoModificableException("Solo se puede " + accion
+                    + " una transacción en estado RESERVA o SENIADO");
+    }
+
+    private BigDecimal sumarMontos(RegistrarPagosRequestDTO dto) {
+        return dto.getPagos().stream()
+                .map(PagoRequestDTO::getMonto)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private void guardarPagos(Transaccion transaccion, RegistrarPagosRequestDTO dto, TipoPago tipo) {
+        List<PagoTransaccion> pagosNuevos = dto.getPagos().stream()
+                .map(pago -> PagoTransaccion.builder()
+                        .transaccion(transaccion)
+                        .metodoPago(pago.getMetodoPago())
+                        .monto(pago.getMonto())
+                        .tipo(tipo)
+                        .build())
+                .toList();
+        pagoTransaccionRepository.saveAll(pagosNuevos);
+    }
+
+    // Cancela las visitas asignadas y las reservas que no avanzaron en DIAS_PARA_CONCRETAR días.
+    // Las transacciones señadas no vencen porque ya hay dinero de por medio.
+    @Transactional
+    public void cancelarVencidas() {
+        LocalDateTime limite = LocalDateTime.now().minusDays(DIAS_PARA_CONCRETAR);
+
+        List<Transaccion> vencidas = new java.util.ArrayList<>();
+        vencidas.addAll(transaccionRepository.buscarAsignadasAnterioresA(EstadoTransaccion.SOLICITAR, limite));
+        vencidas.addAll(transaccionRepository.buscarReservadasAnterioresA(EstadoTransaccion.RESERVA, limite));
+
+        for (Transaccion vencida : vencidas) {
+            Transaccion snapshotAnterior = crearSnapshot(vencida);
+            asignacionCambioDeEstado(vencida, EstadoTransaccion.CANCELADO);
+            auditoriaTransaccionService.registrarCambio(snapshotAnterior, vencida);
+        }
+        transaccionRepository.saveAll(vencidas);
     }
 
     private void asignacionCambioDeEstado(Transaccion transaccion, EstadoTransaccion nuevoEstado) {
@@ -228,6 +386,8 @@ public class TransaccionService {
 
         } else {
             vehiculoService.cambiarEstadoEntity(vehiculo_id, EstadoVehiculo.RESERVADO);
+            if (nuevoEstado == EstadoTransaccion.RESERVA && transaccion.getEstadoTransaccion() != EstadoTransaccion.RESERVA)
+                transaccion.setFecha_reserva(LocalDateTime.now());
             cancelarOtrasSolicitudes(transaccion);
         }
 
@@ -247,23 +407,41 @@ public class TransaccionService {
         transaccionRepository.saveAll(solicitudes);
     }
 
+    @Transactional(readOnly = true)
     public TransaccionComisionResponseDTO comisionPorVendedor(TransaccionFilterDTO filtros) {
-
 
         Usuario vendedor = usuarioService.buscarEntityPorId(filtros.getVendedor_id());
         if (vendedor.getRolUsuario() != Rol.VENDEDOR)
             throw new ResourceNotFoundException("El id solicitado no pertenece a un vendedor");
 
-        BigDecimal totalComisiones = transaccionRepository.findAll(TransaccionSpecification.conFiltros(filtros)).stream()
+        // Las comisiones se cuentan por el día en que se concretó la venta
+        List<Transaccion> ventasDelPeriodo = transaccionRepository.buscarVentasDeVendedor(
+                vendedor.getId(), EstadoTransaccion.VENDIDO, filtros.getFechaDesde(), filtros.getFechaHasta());
+
+        List<VentaComisionResponseDTO> ventas = ventasDelPeriodo.stream()
+                .map(venta -> VentaComisionResponseDTO.builder()
+                        .transaccion_id(venta.getId())
+                        .marca(venta.getVehiculo().getModelo().getMarca().getNombre())
+                        .modelo(venta.getVehiculo().getModelo().getNombre())
+                        .anio(venta.getVehiculo().getAnio())
+                        .patente(venta.getVehiculo().getPatente())
+                        .fecha_venta(venta.getFecha_venta())
+                        .precio_final(venta.getPrecio_final())
+                        .comision(venta.getComision_calculada())
+                        .build())
+                .toList();
+
+        BigDecimal totalComisiones = ventasDelPeriodo.stream()
                 .map(Transaccion::getComision_calculada)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return TransaccionComisionResponseDTO.builder()
                 .id(vendedor.getId())
                 .vendedor_id(vendedor.getId())
-                .nombre_completo(vendedor.getNombre() + " " + vendedor.getApellido()) // O el campo que uses
+                .nombre_completo(vendedor.getNombre() + " " + vendedor.getApellido())
                 .email(vendedor.getEmail())
                 .comision_total(totalComisiones)
+                .ventas(ventas)
                 .build();
     }
 

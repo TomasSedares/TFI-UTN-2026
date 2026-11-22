@@ -4,7 +4,9 @@ import lombok.*;
 import utn.programacion3.agencia_de_autos.model.enums.EstadoTransaccion;
 import utn.programacion3.agencia_de_autos.model.enums.MetodoPago;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -25,7 +27,19 @@ public class TransaccionResponseDTO {
 
     private Long vehiculo_id;
 
+    private String marca;
+
     private String modelo;
+
+    private Integer vehiculo_anio;
+
+    // Precio de venta publicado del vehículo (referencia para validar pagos)
+    private BigDecimal precio_vehiculo;
+
+    // Suma de todos los pagos registrados (señas + pagos de la venta)
+    private BigDecimal total_pagado;
+
+    private List<PagoResponseDTO> pagos;
 
     private String patente;
 
@@ -42,4 +56,6 @@ public class TransaccionResponseDTO {
     private String vendedor_email;
 
     private LocalDateTime fecha_visita;
+
+    private LocalDate fecha_venta;
 }

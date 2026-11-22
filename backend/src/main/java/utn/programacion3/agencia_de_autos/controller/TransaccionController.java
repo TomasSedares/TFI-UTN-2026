@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import utn.programacion3.agencia_de_autos.dto.request.AsignarVisitaRequestDTO;
+import utn.programacion3.agencia_de_autos.dto.request.RegistrarPagosRequestDTO;
 import utn.programacion3.agencia_de_autos.dto.request.SolicitudTransaccionRequestDTO;
 import utn.programacion3.agencia_de_autos.dto.request.TransaccionFilterDTO;
 import utn.programacion3.agencia_de_autos.dto.request.TransaccionRequestDTO;
@@ -169,43 +170,43 @@ public class TransaccionController {
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'VENDEDOR')")
     @PatchMapping("/{id}/cancelar")
     public ResponseEntity<TransaccionResponseDTO> cancelarTransaccionPorid(@PathVariable Long id) {
-        return ResponseEntity.ok(transaccionService.cambiarEstado(id, EstadoTransaccion.CANCELADO, null));
+        return ResponseEntity.ok(transaccionService.cambiarEstado(id, EstadoTransaccion.CANCELADO));
     }
 
     @Operation(
-            summary = "Marcar transacción como vendida",
-            description = "Finaliza el flujo de la operación comercial estableciendo el estado en VENDIDO y fijando el monto del precio final."
+            summary = "Registrar la venta con sus pagos",
+            description = "Concreta la venta. Los pagos enviados (uno o varios métodos) más lo ya señado tienen que sumar exactamente el precio de venta del vehículo."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Estado modificado a VENDIDO exitosamente"),
-            @ApiResponse(responseCode = "400", description = "El parámetro del precio final no es válido o está ausente"),
+            @ApiResponse(responseCode = "200", description = "Venta registrada exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Los pagos no cubren exactamente lo que falta abonar o el estado no permite vender"),
             @ApiResponse(responseCode = "404", description = "La transacción especificada no existe"),
             @ApiResponse(responseCode = "403", description = "Acceso denegado. Se requiere rol ADMINISTRADOR o VENDEDOR")
     })
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'VENDEDOR')")
-    @PatchMapping("/{id}/vender")
+    @PostMapping("/{id}/vender")
     public ResponseEntity<TransaccionResponseDTO> venderTransaccionPorid(
             @PathVariable Long id,
-            @RequestParam BigDecimal precioFinal) {
-        return ResponseEntity.ok(transaccionService.cambiarEstado(id, EstadoTransaccion.VENDIDO, precioFinal));
+            @Valid @RequestBody RegistrarPagosRequestDTO dto) {
+        return ResponseEntity.ok(transaccionService.registrarVenta(id, dto));
     }
 
     @Operation(
-            summary = "Registrar seña de transacción",
-            description = "Asigna el estado de SEÑADO a la operación comercial y asienta el monto económico entregado en concepto de seña."
+            summary = "Registrar una seña con sus pagos",
+            description = "Pasa la transacción a SEÑADO y registra uno o varios pagos. La suma de todo lo abonado no puede superar el precio de venta del vehículo."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Transacción señada de manera exitosa"),
-            @ApiResponse(responseCode = "400", description = "El valor monetario de la seña no es válido"),
+            @ApiResponse(responseCode = "200", description = "Seña registrada de manera exitosa"),
+            @ApiResponse(responseCode = "400", description = "Los pagos superan lo que falta abonar o el estado no permite señar"),
             @ApiResponse(responseCode = "404", description = "La transacción especificada no existe"),
             @ApiResponse(responseCode = "403", description = "Acceso denegado. Se requiere rol ADMINISTRADOR o VENDEDOR")
     })
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'VENDEDOR')")
-    @PatchMapping("/{id}/seniar")
+    @PostMapping("/{id}/seniar")
     public ResponseEntity<TransaccionResponseDTO> seniarTransaccionPorid(
             @PathVariable Long id,
-            @RequestParam BigDecimal precioSenia) {
-        return ResponseEntity.ok(transaccionService.cambiarEstado(id, EstadoTransaccion.SENIADO, precioSenia));
+            @Valid @RequestBody RegistrarPagosRequestDTO dto) {
+        return ResponseEntity.ok(transaccionService.registrarSenia(id, dto));
     }
 
     @Operation(
@@ -221,7 +222,7 @@ public class TransaccionController {
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'VENDEDOR')")
     @PatchMapping("/{id}/estado")
     public ResponseEntity<TransaccionResponseDTO> cambiarEstadoTransaccion(@PathVariable Long id, @Valid @RequestParam EstadoTransaccion estado) {
-        return ResponseEntity.ok(transaccionService.cambiarEstado(id, estado, null));
+        return ResponseEntity.ok(transaccionService.cambiarEstado(id, estado));
     }
     @Operation(
             summary = "Calcular comisiones de un vendedor",

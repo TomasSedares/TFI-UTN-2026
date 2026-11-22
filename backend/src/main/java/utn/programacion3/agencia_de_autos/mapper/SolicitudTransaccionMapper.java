@@ -17,6 +17,9 @@ public interface SolicitudTransaccionMapper {
     @Mapping(target = "cliente", ignore = true)
     @Mapping(target = "vendedor", ignore = true)
     @Mapping(target = "fecha_visita", ignore = true)
+    @Mapping(target = "fecha_asignacion", ignore = true)
+    @Mapping(target = "fecha_reserva", ignore = true)
+    @Mapping(target = "fecha_venta", ignore = true)
     @Mapping(target = "estadoTransaccion", constant = "SOLICITAR")
     Transaccion toEntity(SolicitudTransaccionRequestDTO dto);
 }

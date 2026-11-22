@@ -31,6 +31,15 @@ public class Transaccion {
 
     private LocalDateTime fecha_visita;
 
+    // Momento en que un vendedor se asignó la solicitud (límite semanal y vencimiento de visitas)
+    private LocalDateTime fecha_asignacion;
+
+    // Momento en que la transacción pasó a RESERVA (vence a los 7 días si no se seña)
+    private LocalDateTime fecha_reserva;
+
+    // Día en que se concretó la venta (listado de comisiones por vendedor)
+    private LocalDate fecha_venta;
+
     private BigDecimal precio_final;
 
     @Builder.Default

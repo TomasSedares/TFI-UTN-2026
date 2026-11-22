@@ -95,3 +95,6 @@ INSERT INTO auditoria_transaccion (created_at, precio_final_anterior, precio_fin
 -- 9. FAVORITOS
 -- ----------------------------------------------------------------
 INSERT INTO favoritos (usuario_id, vehiculo_id) VALUES ((SELECT id FROM usuario WHERE email = 'martin.perez@gmail.com'), (SELECT id_vehiculo FROM vehiculos WHERE patente = 'EF789GH')), ((SELECT id FROM usuario WHERE email = 'martin.perez@gmail.com'), (SELECT id_vehiculo FROM vehiculos WHERE patente = 'OP234QR')), ((SELECT id FROM usuario WHERE email = 'sofia.rodriguez@gmail.com'), (SELECT id_vehiculo FROM vehiculos WHERE patente = 'MN901OP')), ((SELECT id FROM usuario WHERE email = 'diego.gomez@gmail.com'), (SELECT id_vehiculo FROM vehiculos WHERE patente = 'IJ345KL')), ((SELECT id FROM usuario WHERE email = 'diego.gomez@gmail.com'), (SELECT id_vehiculo FROM vehiculos WHERE patente = 'QR567ST')), ((SELECT id FROM usuario WHERE email = 'valentina.martinez@gmail.com'), (SELECT id_vehiculo FROM vehiculos WHERE patente = 'ST890UV'));
+-- Fechas de las transacciones sembradas (comisiones por venta y vencimiento de reservas)
+UPDATE transaccion SET fecha_venta = updated_at WHERE estado_transaccion = 'VENDIDO' AND fecha_venta IS NULL;
+UPDATE transaccion SET fecha_reserva = CAST(created_at AS TIMESTAMP) WHERE estado_transaccion = 'RESERVA' AND fecha_reserva IS NULL;

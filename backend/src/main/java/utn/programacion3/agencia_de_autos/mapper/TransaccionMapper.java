@@ -19,13 +19,21 @@ public interface TransaccionMapper {
     @Mapping(target = "cliente", ignore = true)
     @Mapping(target = "vendedor", ignore = true)
     @Mapping(target = "fecha_visita", ignore = true)
+    @Mapping(target = "fecha_asignacion", ignore = true)
+    @Mapping(target = "fecha_reserva", ignore = true)
+    @Mapping(target = "fecha_venta", ignore = true)
     @Mapping(target = "estadoTransaccion", constant = "RESERVA")
     Transaccion toEntity(TransaccionRequestDTO dto);
 
     @Mapping(target = "vehiculo_id", source = "vehiculo.id")
     @Mapping(target = "cliente_id", source = "cliente.id")
     @Mapping(target = "vendedor_id", source = "vendedor.id")
+    @Mapping(target = "marca", source = "vehiculo.modelo.marca.nombre")
     @Mapping(target = "modelo", source = "vehiculo.modelo.nombre")
+    @Mapping(target = "vehiculo_anio", source = "vehiculo.anio")
+    @Mapping(target = "precio_vehiculo", source = "vehiculo.precioVenta")
+    @Mapping(target = "total_pagado", ignore = true)
+    @Mapping(target = "pagos", ignore = true)
     @Mapping(target = "patente", source = "vehiculo.patente")
     @Mapping(target = "cliente_email", source = "cliente.email")
     @Mapping(target = "vendedor_nombre", source = "vendedor.nombre")
@@ -41,6 +49,9 @@ public interface TransaccionMapper {
     @Mapping(target = "cliente", ignore = true)
     @Mapping(target = "vendedor", ignore = true)
     @Mapping(target = "fecha_visita", ignore = true)
+    @Mapping(target = "fecha_asignacion", ignore = true)
+    @Mapping(target = "fecha_reserva", ignore = true)
+    @Mapping(target = "fecha_venta", ignore = true)
     @Mapping(target = "estadoTransaccion", ignore = true)
     void updateEntityFromDto(TransaccionRequestDTO dto, @MappingTarget Transaccion transaccion);
 }
