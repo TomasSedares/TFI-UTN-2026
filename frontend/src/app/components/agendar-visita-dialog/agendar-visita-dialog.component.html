@@ -4,11 +4,11 @@
   
   <mat-dialog-content>
 
-    <p class="dialog-description">Solicitud #{{ transaccion.id }} · {{ transaccion.patente }} · {{ transaccion.cliente_email }}</p>
+    <p class="dialog-description">{{ transaccion.marca }} {{ transaccion.modelo }} {{ transaccion.vehiculo_anio }} · {{ transaccion.patente }} · {{ transaccion.cliente_email }}</p>
 
     <mat-form-field appearance="outline">
       <mat-label>Día</mat-label>
-      <input matInput [matDatepicker]="pickerVisita" name="dia" [(ngModel)]="dia" [min]="hoy" required>
+      <input matInput [matDatepicker]="pickerVisita" name="dia" [(ngModel)]="dia" [min]="hoy" [max]="maximo" required>
       <mat-datepicker-toggle matIconSuffix [for]="pickerVisita" />
       <mat-datepicker #pickerVisita />
     </mat-form-field>

@@ -1,15 +1,42 @@
 <h2 mat-dialog-title>{{ esSenia ? 'Registrar seña' : 'Confirmar venta' }}</h2>
 <form class="dialog-form" (ngSubmit)="confirmar()">
   <mat-dialog-content>
-    <p class="dialog-description">Transacción #{{ data.transaccion.id }} · {{ data.transaccion.patente }}</p>
-    <mat-form-field appearance="outline">
-      <mat-label>{{ esSenia ? 'Monto de la seña' : 'Precio final de venta' }}</mat-label>
-      <input matInput type="number" min="1" name="monto" [(ngModel)]="monto" required>
-    </mat-form-field>
+    <p class="dialog-description">
+      {{ data.transaccion.marca }} {{ data.transaccion.modelo }} {{ data.transaccion.vehiculo_anio }} · {{ data.transaccion.patente }}
+    </p>
+    <p class="dialog-description">
+      Precio del vehículo: <strong>$ {{ formatear(precioVehiculo) }}</strong>
+      @if (yaPagado > 0) { · Ya abonado: <strong>$ {{ formatear(yaPagado) }}</strong> }
+      · Falta abonar: <strong>$ {{ formatear(faltaAbonar) }}</strong>
+    </p>
+
+    @for (fila of filas(); track $index; let indice = $index) {
+      <div class="fila-pago">
+        <mat-form-field appearance="outline">
+          <mat-label>Método de pago</mat-label>
+          <mat-select [name]="'metodo' + indice" [ngModel]="fila.metodoPago" (ngModelChange)="cambiarMetodo(indice, $event)">
+            @for (metodo of metodosPago; track metodo) {
+              <mat-option [value]="metodo">{{ etiquetaMetodoPago[metodo] }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Monto</mat-label>
+          <input matInput type="number" min="1" [name]="'monto' + indice" [ngModel]="fila.monto" (ngModelChange)="cambiarMonto(indice, $event)" required>
+        </mat-form-field>
+        @if (filas().length > 1) {
+          <button type="button" matButton="outlined" class="button-outline" (click)="quitarFila(indice)">Quitar</button>
+        }
+      </div>
+    }
+
+    <button type="button" matButton="outlined" class="button-outline" (click)="agregarFila()">＋ Agregar otro método de pago</button>
+
+    <p class="dialog-description">Total ingresado: <strong>$ {{ formatear(totalIngresado()) }}</strong>. {{ resumen() }}</p>
     @if (error()) { <p class="form-error">{{ error() }}</p> }
   </mat-dialog-content>
   <mat-dialog-actions align="end">
     <button type="button" matButton="outlined" class="button-outline" (click)="cerrar()">Volver</button>
-    <button matButton="filled" class="button-dark" type="submit">{{ esSenia ? 'Registrar seña' : 'Vender' }}</button>
+    <button matButton="filled" class="button-dark" type="submit" [disabled]="!puedeConfirmar()">{{ esSenia ? 'Registrar seña' : 'Vender' }}</button>
   </mat-dialog-actions>
 </form>

@@ -13,11 +13,12 @@ export interface ModeloDialogData {
   marcas: Marca[];
 }
 
-const ANIO_MINIMO = 1900;
+const ANIO_MINIMO = 1990;
+
+const ANIO_MAXIMO = new Date().getFullYear() + 1;
 
 const MSG = {
   camposObligatorios: 'Completá marca, nombre, año y tipo.',
-  anioInvalido: `El año tiene que ser ${ANIO_MINIMO} o posterior.`,
 };
 
 @Component({
@@ -38,7 +39,8 @@ export class ModeloDialogComponent {
   private readonly dialogRef = inject<MatDialogRef<ModeloDialogComponent, ModeloRequest>>(MatDialogRef);
 
   protected readonly esEdicion = this.data.modelo !== null;
-  protected readonly anioMinimo = ANIO_MINIMO;
+  // Desplegable de años: del próximo año modelo hasta 1990 (si el modelo ya tiene un año anterior, se conserva)
+  protected readonly anios = this.armarAnios();
   protected readonly tiposModelo = Object.values(TipoModelo);
   protected readonly etiquetaTipoModelo = ETIQUETA_TIPO_MODELO;
   protected readonly error = signal('');
@@ -47,6 +49,14 @@ export class ModeloDialogComponent {
   protected anio: number | null = this.data.modelo?.anio ?? null;
   protected tipoModelo: TipoModelo | null = this.data.modelo?.tipoModelo ?? null;
   protected activo = this.data.modelo?.activo ?? true;
+
+  private armarAnios(): number[] {
+    const anios: number[] = [];
+    for (let anio = ANIO_MAXIMO; anio >= ANIO_MINIMO; anio--) anios.push(anio);
+    const anioActual = this.data.modelo?.anio;
+    if (anioActual && !anios.includes(anioActual)) anios.push(anioActual);
+    return anios.sort((anioA, anioB) => anioB - anioA);
+  }
 
   protected confirmar(): void {
 
@@ -57,11 +67,6 @@ export class ModeloDialogComponent {
       return;
     }
 
-    if (this.anio < ANIO_MINIMO) {
-      this.error.set(MSG.anioInvalido);
-      return;
-    }
-    
     this.dialogRef.close({
       nombre,
       anio: this.anio,

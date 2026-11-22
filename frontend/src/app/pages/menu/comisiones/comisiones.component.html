@@ -47,6 +47,36 @@
     <section class="comisiones__resultado">
       <p>{{ periodo()?.desde | date:'dd/MM/yyyy' }} al {{ periodo()?.hasta | date:'dd/MM/yyyy' }}</p>
       <app-dashboard-card [card]="tarjeta" />
+
+      <h2>Ventas del período</h2>
+      @if (comision()?.ventas?.length) {
+        <table mat-table [dataSource]="comision()?.ventas ?? []">
+          <ng-container matColumnDef="fecha">
+            <th mat-header-cell *matHeaderCellDef>Fecha de venta</th>
+            <td mat-cell *matCellDef="let venta">{{ venta.fecha_venta | date:'dd/MM/yyyy' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="vehiculo">
+            <th mat-header-cell *matHeaderCellDef>Vehículo</th>
+            <td mat-cell *matCellDef="let venta">{{ venta.marca }} {{ venta.modelo }} {{ venta.anio }}</td>
+          </ng-container>
+          <ng-container matColumnDef="patente">
+            <th mat-header-cell *matHeaderCellDef>Patente</th>
+            <td mat-cell *matCellDef="let venta">{{ venta.patente }}</td>
+          </ng-container>
+          <ng-container matColumnDef="precio">
+            <th mat-header-cell *matHeaderCellDef>Precio de venta</th>
+            <td mat-cell *matCellDef="let venta">{{ venta.precio_final | currency:'ARS':'symbol-narrow':'1.0-0':'es-AR' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="comision">
+            <th mat-header-cell *matHeaderCellDef>Comisión</th>
+            <td mat-cell *matCellDef="let venta">{{ venta.comision | currency:'ARS':'symbol-narrow':'1.0-0':'es-AR' }}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="columnasVentas"></tr>
+          <tr mat-row *matRowDef="let fila; columns: columnasVentas"></tr>
+        </table>
+      } @else {
+        <p>Este vendedor no concretó ventas en el período.</p>
+      }
     </section>
   }
 </main>

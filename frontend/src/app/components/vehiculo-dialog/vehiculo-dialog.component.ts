@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
@@ -6,6 +6,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { Imagen } from '../../models/Imagen';
 import { Marca, Modelo } from '../../models/Opciones';
 import {
   ETIQUETA_COMBUSTIBLE,
@@ -21,16 +22,32 @@ export interface VehiculoDialogData {
   vehiculo: VehiculoGestion | null;
   marcas: Marca[];
   modelos: Modelo[];
+  imagenesExistentes: Imagen[];
 }
+
+// Imagen en edición dentro del diálogo: las ya guardadas tienen id, las recién elegidas no
+export interface ImagenEnEdicion {
+  id: number | null;
+  url: string;
+  esPrincipal: boolean;
+}
+
+export interface VehiculoDialogResultado {
+  vehiculo: VehiculoRequest;
+  imagenesNuevas: ImagenEnEdicion[];
+  idsImagenesAEliminar: number[];
+  imagenPrincipalExistente: ImagenEnEdicion | null;
+}
+
+const TAMANIO_MAXIMO_MB = 2;
+
+const TAMANIO_MAXIMO_BYTES = TAMANIO_MAXIMO_MB * 1024 * 1024;
 
 // Patente argentina: vieja (ABC123) o Mercosur (AB123CD)
 const PATENTE_REGEX = /^([A-Za-z]{3}\d{3}|[A-Za-z]{2}\d{3}[A-Za-z]{2})$/;
 
-const ANIO_MINIMO = 1900;
-
-const ANIO_MAXIMO = new Date().getFullYear() + 1;
-
 const MSG = {
+  imagenMuyGrande: `Cada imagen no puede superar los ${TAMANIO_MAXIMO_MB} MB.`,
   obligatorio: 'Campo obligatorio',
   patenteInvalida: 'Formato inválido (ej: AB123CD o ABC123)',
   invalido: 'Valor inválido',
@@ -44,7 +61,7 @@ const MSG = {
 })
 export class VehiculoDialogComponent {
   protected readonly data = inject<VehiculoDialogData>(MAT_DIALOG_DATA);
-  private readonly dialogRef = inject<MatDialogRef<VehiculoDialogComponent, VehiculoRequest>>(MatDialogRef);
+  private readonly dialogRef = inject<MatDialogRef<VehiculoDialogComponent, VehiculoDialogResultado>>(MatDialogRef);
   private readonly fb = inject(NonNullableFormBuilder);
 
   private readonly vehiculo = this.data.vehiculo;
@@ -56,15 +73,22 @@ export class VehiculoDialogComponent {
   protected readonly etiquetaCombustible = ETIQUETA_COMBUSTIBLE;
   protected readonly etiquetaTransmision = ETIQUETA_TRANSMISION;
 
+  // Solo se pueden cargar vehículos de marcas y modelos activos (el actual se conserva al editar)
+  protected readonly marcasActivas = this.data.marcas.filter(
+    marca => marca.activo || marca.id === this.vehiculo?.marcaId,
+  );
+
+  protected readonly imagenes = signal<ImagenEnEdicion[]>(
+    this.data.imagenesExistentes.map(imagen => ({ id: imagen.id, url: imagen.url, esPrincipal: imagen.esPrincipal })),
+  );
+  protected readonly errorImagen = signal('');
+  private readonly idsImagenesAEliminar: number[] = [];
+
   protected readonly formulario = this.fb.group({
     patente: [this.vehiculo?.patente ?? '', [Validators.required, Validators.pattern(PATENTE_REGEX)]],
     marcaId: this.fb.control<number | null>(this.vehiculo?.marcaId ?? null, Validators.required),
     modeloId: this.fb.control<number | null>(this.vehiculo?.modeloId ?? null, Validators.required),
-    anio: this.fb.control<number | null>(this.vehiculo?.anio ?? null, [
-      Validators.required,
-      Validators.min(ANIO_MINIMO),
-      Validators.max(ANIO_MAXIMO),
-    ]),
+    anio: this.fb.control<number | null>(this.vehiculo?.anio ?? null, Validators.required),
     kilometraje: this.fb.control<number | null>(this.vehiculo?.kilometraje ?? null, [Validators.required, Validators.min(0)]),
     precioAdquisicion: this.fb.control<number | null>(
       { value: this.vehiculo?.precioAdquisicion ?? null, disabled: this.esVendido },
@@ -81,14 +105,82 @@ export class VehiculoDialogComponent {
     initialValue: this.formulario.controls.marcaId.value,
   });
 
+  private readonly modeloSeleccionado = toSignal(this.formulario.controls.modeloId.valueChanges, {
+    initialValue: this.formulario.controls.modeloId.value,
+  });
+
   protected readonly modelosDeMarca = computed(() =>
-    this.data.modelos.filter(modelo => modelo.marcaId === this.marcaSeleccionada()),
+    this.data.modelos.filter(
+      modelo => modelo.marcaId === this.marcaSeleccionada()
+        && (modelo.activo || modelo.id === this.vehiculo?.modeloId),
+    ),
   );
+
+  // Años disponibles: los de los modelos cargados con el mismo nombre y marca que el elegido
+  protected readonly aniosDisponibles = computed(() => {
+    const modeloElegido = this.data.modelos.find(modelo => modelo.id === this.modeloSeleccionado());
+    if (!modeloElegido) return [];
+
+    const anios = new Set(
+      this.data.modelos
+        .filter(modelo => modelo.marcaId === modeloElegido.marcaId && modelo.nombre === modeloElegido.nombre)
+        .map(modelo => modelo.anio),
+    );
+    if (this.vehiculo && this.vehiculo.modeloId === modeloElegido.id) anios.add(this.vehiculo.anio);
+    return [...anios].sort((anioA, anioB) => anioB - anioA);
+  });
 
   constructor() {
     this.formulario.controls.marcaId.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.formulario.controls.modeloId.setValue(null));
+
+    // Al elegir modelo se propone el año del propio modelo
+    this.formulario.controls.modeloId.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(modeloId => {
+        const modelo = this.data.modelos.find(candidato => candidato.id === modeloId);
+        this.formulario.controls.anio.setValue(modelo?.anio ?? null);
+      });
+  }
+
+  protected seleccionarArchivos(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivos = Array.from(entrada.files ?? []);
+    entrada.value = '';
+
+    for (const archivo of archivos) {
+      if (archivo.size > TAMANIO_MAXIMO_BYTES) {
+        this.errorImagen.set(MSG.imagenMuyGrande);
+        continue;
+      }
+      this.errorImagen.set('');
+      const lector = new FileReader();
+      lector.onload = () => {
+        const sinPrincipal = !this.imagenes().some(imagen => imagen.esPrincipal);
+        this.imagenes.update(imagenes => [
+          ...imagenes,
+          { id: null, url: lector.result as string, esPrincipal: sinPrincipal },
+        ]);
+      };
+      lector.readAsDataURL(archivo);
+    }
+  }
+
+  protected marcarPrincipal(indice: number): void {
+    this.imagenes.update(imagenes =>
+      imagenes.map((imagen, posicion) => ({ ...imagen, esPrincipal: posicion === indice })),
+    );
+  }
+
+  protected quitarImagen(indice: number): void {
+    const imagenQuitada = this.imagenes()[indice];
+    if (imagenQuitada.id !== null) this.idsImagenesAEliminar.push(imagenQuitada.id);
+
+    const quedan = this.imagenes().filter((_, posicion) => posicion !== indice);
+    // Si se quita la principal, la primera que quede pasa a serlo
+    if (imagenQuitada.esPrincipal && quedan.length) quedan[0] = { ...quedan[0], esPrincipal: true };
+    this.imagenes.set(quedan);
   }
 
   protected confirmar(): void {
@@ -98,7 +190,12 @@ export class VehiculoDialogComponent {
     }
 
     const valores = this.formulario.getRawValue();
-    this.dialogRef.close({
+    const imagenesActuales = this.imagenes();
+    const imagenesIniciales = this.data.imagenesExistentes;
+    const principalActual = imagenesActuales.find(imagen => imagen.esPrincipal && imagen.id !== null) ?? null;
+    const principalInicial = imagenesIniciales.find(imagen => imagen.esPrincipal) ?? null;
+
+    const vehiculoRequest: VehiculoRequest = {
       patente: valores.patente.trim().toUpperCase(),
       anio: valores.anio!,
       precioAdquisicion: valores.precioAdquisicion!,
@@ -110,6 +207,14 @@ export class VehiculoDialogComponent {
       estado: this.vehiculo?.estado ?? EstadoVehiculo.DISPONIBLE,
       tipoTransmision: valores.tipoTransmision!,
       tipoCombustible: valores.tipoCombustible!,
+    };
+
+    this.dialogRef.close({
+      vehiculo: vehiculoRequest,
+      imagenesNuevas: imagenesActuales.filter(imagen => imagen.id === null),
+      idsImagenesAEliminar: this.idsImagenesAEliminar,
+      // Solo hay que actualizar una imagen ya guardada si pasó a ser la principal
+      imagenPrincipalExistente: principalActual && principalActual.id !== principalInicial?.id ? principalActual : null,
     });
   }
 

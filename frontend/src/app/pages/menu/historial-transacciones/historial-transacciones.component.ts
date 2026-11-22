@@ -10,7 +10,10 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import {
+  AccionUsuario,
   AuditoriaTransaccion,
+  AuditoriaUsuario,
+  ETIQUETA_ACCION_USUARIO,
   ETIQUETA_ESTADO,
   ETIQUETA_METODO_PAGO,
   EstadoTransaccion,
@@ -38,6 +41,7 @@ interface FormularioFiltros {
 const MSG = {
   errorCarga: 'No se pudo cargar el historial de transacciones.',
   errorVendedores: 'No se pudieron cargar los vendedores.',
+  errorCargaUsuarios: 'No se pudo cargar el historial de usuarios.',
   rangoInvalido: 'La fecha desde no puede ser posterior a la fecha hasta.',
   valoresInvalidos: 'Los IDs deben ser positivos y los precios no pueden ser negativos.',
 };
@@ -75,8 +79,15 @@ export class HistorialTransaccionesComponent {
   protected readonly metodosPago = Object.values(MetodoPago);
   protected readonly etiquetaEstado = ETIQUETA_ESTADO;
   protected readonly etiquetaMetodoPago = ETIQUETA_METODO_PAGO;
-  protected readonly columnas = ['fecha', 'transaccion', 'vendedor', 'estado', 'precio', 'metodoPago'];
+  protected readonly columnas = ['fecha', 'vendedor', 'estado', 'precio', 'metodoPago'];
   protected readonly pageSize = 10;
+
+  // Dos vistas: cambios de transacciones y altas/bajas de usuarios
+  protected readonly vista = signal<'transacciones' | 'usuarios'>('transacciones');
+  protected readonly columnasUsuarios = ['fecha', 'usuario', 'accion', 'realizadoPor'];
+  protected readonly auditoriasUsuarios = signal<Pagina<AuditoriaUsuario> | null>(null);
+  protected readonly cargandoUsuarios = signal(false);
+  protected pageIndexUsuarios = 0;
 
   protected readonly auditorias = signal<Pagina<AuditoriaTransaccion> | null>(null);
   protected readonly vendedores = signal<Usuario[]>([]);
@@ -91,6 +102,35 @@ export class HistorialTransaccionesComponent {
     this.usuarioService.getVendedores().subscribe({
       next: vendedores => this.vendedores.set(vendedores),
       error: () => this.error.set(MSG.errorVendedores),
+    });
+  }
+
+  protected etiquetaDeAccion(accion: AccionUsuario): string {
+    return ETIQUETA_ACCION_USUARIO[accion];
+  }
+
+  protected cambiarVista(vista: 'transacciones' | 'usuarios'): void {
+    this.vista.set(vista);
+    this.error.set('');
+    if (vista === 'usuarios') this.cargarUsuarios();
+  }
+
+  protected cambiarPaginaUsuarios(evento: PageEvent): void {
+    this.pageIndexUsuarios = evento.pageIndex;
+    this.cargarUsuarios();
+  }
+
+  private cargarUsuarios(): void {
+    this.cargandoUsuarios.set(true);
+    this.auditoriaService.listarUsuarios(this.pageIndexUsuarios, this.pageSize).subscribe({
+      next: pagina => {
+        this.auditoriasUsuarios.set(pagina);
+        this.cargandoUsuarios.set(false);
+      },
+      error: () => {
+        this.error.set(MSG.errorCargaUsuarios);
+        this.cargandoUsuarios.set(false);
+      },
     });
   }
 
@@ -127,7 +167,7 @@ export class HistorialTransaccionesComponent {
   protected nombreVendedor(vendedorId: number | null): string {
     if (vendedorId === null) return SIN_DATO;
     const vendedor = this.vendedores().find(v => v.id === vendedorId);
-    return vendedor ? `#${vendedorId} – ${vendedor.nombre} ${vendedor.apellido}` : `#${vendedorId}`;
+    return vendedor ? `${vendedor.nombre} ${vendedor.apellido}` : SIN_DATO;
   }
 
   protected cambio(anterior: string, nuevo: string): string {

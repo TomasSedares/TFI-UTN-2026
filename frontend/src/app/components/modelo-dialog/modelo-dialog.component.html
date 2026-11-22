@@ -20,7 +20,9 @@
 
     <mat-form-field appearance="outline">
       <mat-label>Año</mat-label>
-      <input matInput type="number" [min]="anioMinimo" name="anio" [(ngModel)]="anio" required>
+      <mat-select name="anio" [(ngModel)]="anio" required>
+        @for (anioOpcion of anios; track anioOpcion) { <mat-option [value]="anioOpcion">{{ anioOpcion }}</mat-option> }
+      </mat-select>
     </mat-form-field>
 
     <mat-form-field appearance="outline">

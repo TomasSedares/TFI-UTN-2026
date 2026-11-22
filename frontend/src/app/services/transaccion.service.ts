@@ -3,7 +3,7 @@ import { inject, Injectable, Service } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Pagina } from '../models/Vehiculo';
 import { TRANSACCIONES_URL } from './api_config';
-import { ActualizarTransaccion, AsignarVisita, BalanceTransacciones, ComisionVendedor, CrearTransaccion, FiltrosTransaccion, SolicitarTransaccion, Transaccion } from '../models/Transacciones';
+import { ActualizarTransaccion, AsignarVisita, BalanceTransacciones, ComisionVendedor, CrearTransaccion, FiltrosTransaccion, PagoRequest, SolicitarTransaccion, Transaccion } from '../models/Transacciones';
 
 
 @Service()
@@ -42,14 +42,12 @@ export class TransaccionService {
     return this.http.patch<Transaccion>(`${TRANSACCIONES_URL}/${id}/asignar`, datos);
   }
 
-  senar(id: number, precioSenia: number): Observable<Transaccion> {
-    const params = new HttpParams().set('precioSenia', precioSenia);
-    return this.http.patch<Transaccion>(`${TRANSACCIONES_URL}/${id}/seniar`, null, { params });
+  senar(id: number, pagos: PagoRequest[]): Observable<Transaccion> {
+    return this.http.post<Transaccion>(`${TRANSACCIONES_URL}/${id}/seniar`, { pagos });
   }
 
-  vender(id: number, precioFinal: number): Observable<Transaccion> {
-    const params = new HttpParams().set('precioFinal', precioFinal);
-    return this.http.patch<Transaccion>(`${TRANSACCIONES_URL}/${id}/vender`, null, { params });
+  vender(id: number, pagos: PagoRequest[]): Observable<Transaccion> {
+    return this.http.post<Transaccion>(`${TRANSACCIONES_URL}/${id}/vender`, { pagos });
   }
 
   cancelar(id: number): Observable<Transaccion> {

@@ -8,9 +8,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { AsignarVisita, Transaccion } from '../../models/Transacciones';
 
+const DIAS_MAXIMOS_HASTA_LA_VISITA = 14;
+
 const MSG = {
   fechaIncompleta: 'Elegí el día y la hora de la visita.',
   fechaPasada: 'La visita tiene que ser en una fecha y hora futura.',
+  fechaLejana: `La visita no puede agendarse con más de ${DIAS_MAXIMOS_HASTA_LA_VISITA} días de anticipación.`,
 };
 
 @Component({
@@ -24,6 +27,7 @@ export class AgendarVisitaDialogComponent {
   private readonly dialogRef = inject<MatDialogRef<AgendarVisitaDialogComponent, AsignarVisita>>(MatDialogRef);
 
   protected readonly hoy = new Date();
+  protected readonly maximo = new Date(Date.now() + DIAS_MAXIMOS_HASTA_LA_VISITA * 24 * 60 * 60 * 1000);
   protected readonly esReprogramacion = this.transaccion.fecha_visita !== null;
   protected readonly error = signal('');
   protected dia: Date | null = this.transaccion.fecha_visita ? new Date(this.transaccion.fecha_visita) : null;
@@ -41,6 +45,10 @@ export class AgendarVisitaDialogComponent {
 
     if (fecha <= new Date()) {
       this.error.set(MSG.fechaPasada);
+      return;
+    }
+    if (fecha > this.maximo) {
+      this.error.set(MSG.fechaLejana);
       return;
     }
     this.dialogRef.close({ fechaVisita: this.formatearFechaHora(fecha) });

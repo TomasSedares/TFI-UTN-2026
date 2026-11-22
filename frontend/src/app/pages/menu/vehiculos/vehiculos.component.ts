@@ -1,9 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MatButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
-import { Observable } from 'rxjs';
+import { Observable, concat, of, switchMap, toArray } from 'rxjs';
 import {
   ConfirmarDialogComponent,
   ConfirmarDialogData,
@@ -11,9 +12,12 @@ import {
 import {
   VehiculoDialogComponent,
   VehiculoDialogData,
+  VehiculoDialogResultado,
 } from '../../../components/vehiculo-dialog/vehiculo-dialog.component';
+import { Imagen } from '../../../models/Imagen';
+import { ImagenService } from '../../../services/imagen.service';
 import { Marca, Modelo } from '../../../models/Opciones';
-import { ETIQUETA_ESTADO_VEHICULO, Pagina, VehiculoGestion, VehiculoRequest } from '../../../models/Vehiculo';
+import { ETIQUETA_ESTADO_VEHICULO, Pagina, VehiculoGestion } from '../../../models/Vehiculo';
 import { AuthService } from '../../../services/auth.service';
 import { MarcaService } from '../../../services/marca.service';
 import { ModeloService } from '../../../services/modelo.service';
@@ -27,6 +31,7 @@ const TAMANIO_DIALOGO_VEHICULO = { width: '720px', maxWidth: '92vw' };
 
 const MSG = {
   errorCarga: 'No se pudieron cargar los vehículos.',
+  errorCargaImagenes: 'No se pudieron cargar las imágenes del vehículo.',
   errorCargaOpciones: 'No se pudieron cargar las marcas y modelos.',
   errorOperacion: 'No se pudo completar la operación. Revisá los datos e intentá nuevamente.',
   errorEliminar: 'No se pudo eliminar el vehículo. Verificá que no tenga transacciones o imágenes asociadas.',
@@ -45,6 +50,7 @@ export class VehiculosComponent {
   private readonly vehiculoService = inject(VehiculoService);
   private readonly marcaService = inject(MarcaService);
   private readonly modeloService = inject(ModeloService);
+  private readonly imagenService = inject(ImagenService);
   private readonly dialog = inject(MatDialog);
   private readonly auth = inject(AuthService);
 
@@ -93,31 +99,60 @@ export class VehiculosComponent {
   }
 
   abrirCrear(): void {
-    this.error.set('');
-    this.dialog
-      .open<VehiculoDialogComponent, VehiculoDialogData, VehiculoRequest>(VehiculoDialogComponent, {
-        ...TAMANIO_DIALOGO_VEHICULO,
-        data: { vehiculo: null, marcas: this.marcas(), modelos: this.modelos() },
-      })
-      .afterClosed()
-      .subscribe(datos => {
-        if (!datos) return;
-        this.ejecutar(this.vehiculoService.crear(datos), MSG.creado);
-      });
+    this.abrirFormulario(null, []);
   }
 
   abrirEditar(vehiculo: VehiculoGestion): void {
     this.error.set('');
+    this.imagenService.listarPorVehiculo(vehiculo.id).subscribe({
+      next: imagenes => this.abrirFormulario(vehiculo, imagenes),
+      error: () => this.error.set(MSG.errorCargaImagenes),
+    });
+  }
+
+  private abrirFormulario(vehiculo: VehiculoGestion | null, imagenesExistentes: Imagen[]): void {
+    this.error.set('');
     this.dialog
-      .open<VehiculoDialogComponent, VehiculoDialogData, VehiculoRequest>(VehiculoDialogComponent, {
+      .open<VehiculoDialogComponent, VehiculoDialogData, VehiculoDialogResultado>(VehiculoDialogComponent, {
         ...TAMANIO_DIALOGO_VEHICULO,
-        data: { vehiculo, marcas: this.marcas(), modelos: this.modelos() },
+        data: { vehiculo, marcas: this.marcas(), modelos: this.modelos(), imagenesExistentes },
       })
       .afterClosed()
-      .subscribe(datos => {
-        if (!datos) return;
-        this.ejecutar(this.vehiculoService.actualizar(vehiculo.id, datos), MSG.actualizado);
+      .subscribe(resultado => {
+        if (!resultado) return;
+
+        const guardado$ = vehiculo
+          ? this.vehiculoService.actualizar(vehiculo.id, resultado.vehiculo)
+          : this.vehiculoService.crear(resultado.vehiculo);
+
+        // Primero se guarda el vehículo y después sus imágenes (necesitan el id del vehículo)
+        const solicitud$ = guardado$.pipe(
+          switchMap(vehiculoGuardado => this.guardarImagenes(vehiculoGuardado.id, resultado)),
+        );
+        this.ejecutar(solicitud$, vehiculo ? MSG.actualizado : MSG.creado);
       });
+  }
+
+  // Elimina las quitadas, crea las nuevas (la principal al final) y actualiza la principal existente si cambió
+  private guardarImagenes(vehiculoId: number, resultado: VehiculoDialogResultado): Observable<unknown> {
+    const nuevasSecundarias = resultado.imagenesNuevas.filter(imagen => !imagen.esPrincipal);
+    const nuevasPrincipales = resultado.imagenesNuevas.filter(imagen => imagen.esPrincipal);
+
+    const operaciones: Observable<unknown>[] = [
+      ...resultado.idsImagenesAEliminar.map(imagenId => this.imagenService.eliminar(imagenId)),
+      ...[...nuevasSecundarias, ...nuevasPrincipales].map(imagen =>
+        this.imagenService.crear({ url: imagen.url, esPrincipal: imagen.esPrincipal, vehiculoId }),
+      ),
+    ];
+
+    const principalExistente = resultado.imagenPrincipalExistente;
+    if (principalExistente?.id) {
+      operaciones.push(
+        this.imagenService.actualizar(principalExistente.id, { url: principalExistente.url, esPrincipal: true, vehiculoId }),
+      );
+    }
+
+    return operaciones.length ? concat(...operaciones).pipe(toArray()) : of([]);
   }
 
   abrirBorrar(vehiculo: VehiculoGestion): void {
@@ -152,7 +187,7 @@ export class VehiculosComponent {
         this.mostrarMensaje(exito);
         this.cargar();
       },
-      error: () => this.error.set(fallo),
+      error: (respuesta: HttpErrorResponse) => this.error.set(respuesta.error?.message ?? fallo),
     });
   }
 

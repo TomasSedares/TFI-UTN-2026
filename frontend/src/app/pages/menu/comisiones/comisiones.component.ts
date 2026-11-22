@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DATE_LOCALE, provideNativeDateAdapter } from '@angular/material/core';
@@ -7,6 +7,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTableModule } from '@angular/material/table';
 import { DashboardCardComponent, DashboardCardData } from '../../../components/dashboard-card/dashboard-card.component';
 import { ComisionVendedor } from '../../../models/Transacciones';
 import { Usuario } from '../../../models/Usuario';
@@ -22,6 +23,7 @@ const MSG = {
 
 @Component({
   imports: [
+    CurrencyPipe,
     DashboardCardComponent,
     DatePipe,
     FormsModule,
@@ -30,6 +32,7 @@ const MSG = {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatTableModule,
   ],
   providers: [{ provide: MAT_DATE_LOCALE, useValue: 'es-AR' }, provideNativeDateAdapter()],
   selector: 'app-comisiones',
@@ -44,6 +47,7 @@ export class ComisionesComponent {
   protected readonly vendedores = signal<Usuario[]>([]);
   protected readonly comision = signal<ComisionVendedor | null>(null);
   protected readonly periodo = signal<{ desde: Date; hasta: Date } | null>(null);
+  protected readonly columnasVentas = ['fecha', 'vehiculo', 'patente', 'precio', 'comision'];
   protected readonly calculando = signal(false);
   protected readonly error = signal<string | null>(null);
 

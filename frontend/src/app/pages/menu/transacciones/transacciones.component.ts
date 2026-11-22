@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, TemplateRef, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { TransaccionService } from '../../../services/transaccion.service';
 import { Pagina } from '../../../models/Vehiculo';
@@ -21,6 +22,7 @@ import {
   EstadoTransaccion,
   FiltrosTransaccion,
   MetodoPago,
+  PagoRequest,
   SIN_OBSERVACIONES,
   Transaccion,
 } from '../../../models/Transacciones';
@@ -43,10 +45,12 @@ const DURACION_MENSAJE_MS = 3500;
 
 const TAMANIO_DIALOGO = { width: '480px', maxWidth: '92vw' };
 
+const TAMANIO_DIALOGO_PAGOS = { width: '640px', maxWidth: '92vw' };
+
 const ASUNTO_CONTACTO = 'Visita a la agencia por el vehículo';
 
 const MSG = {
-  camposObligatorios: 'Completá precio, vehículo, cliente y vendedor.',
+  camposObligatorios: 'Completá vehículo, cliente y vendedor.',
   errorCarga: 'No se pudieron cargar las transacciones.',
   errorOperacion: 'No se pudo completar la operación. Revisá los datos e intentá nuevamente.',
   creada: 'Transacción creada.',
@@ -89,7 +93,7 @@ export class TransaccionesComponent {
   protected readonly etiquetaMetodoPago = ETIQUETA_METODO_PAGO;
   protected readonly estados = signal<EstadoTransaccion[]>(Object.values(EstadoTransaccion));
   protected readonly metodosPago = signal<MetodoPago[]>(Object.values(MetodoPago));
-  protected readonly columnas = ['vehiculo', 'cliente', 'vendedor', 'estado', 'precio', 'acciones'];
+  protected readonly columnas = ['vehiculo', 'patente', 'cliente', 'vendedor', 'estado', 'precio', 'acciones'];
 
   readonly transacciones = signal<Pagina<Transaccion> | null>(null);
   readonly cargando = signal(false);
@@ -163,16 +167,16 @@ export class TransaccionesComponent {
   abrirAccion(tipo: 'senia' | 'venta', transaccion: Transaccion): void {
     this.error.set('');
     this.dialog
-      .open<AccionMontoDialogComponent, AccionMontoDialogData, number>(AccionMontoDialogComponent, {
-        ...TAMANIO_DIALOGO,
+      .open<AccionMontoDialogComponent, AccionMontoDialogData, PagoRequest[]>(AccionMontoDialogComponent, {
+        ...TAMANIO_DIALOGO_PAGOS,
         data: { tipo, transaccion },
       })
       .afterClosed()
-      .subscribe(monto => {
-        if (!monto) return;
+      .subscribe(pagos => {
+        if (!pagos?.length) return;
         const solicitud = tipo === 'senia'
-          ? this.transaccionService.senar(transaccion.id, monto)
-          : this.transaccionService.vender(transaccion.id, monto);
+          ? this.transaccionService.senar(transaccion.id, pagos)
+          : this.transaccionService.vender(transaccion.id, pagos);
         this.ejecutar(solicitud, tipo === 'senia' ? MSG.senia : MSG.venta);
       });
   }
@@ -220,8 +224,8 @@ export class TransaccionesComponent {
   }
 
   crear(): void {
-    const { precio_final, vehiculo_id, cliente_id, vendedor_id } = this.formulario;
-    if (!precio_final || !vehiculo_id || !cliente_id || !vendedor_id) {
+    const { vehiculo_id, cliente_id, vendedor_id } = this.formulario;
+    if (!vehiculo_id || !cliente_id || !vendedor_id) {
       this.error.set(MSG.camposObligatorios);
       return;
     }
@@ -271,7 +275,8 @@ export class TransaccionesComponent {
         this.mostrarMensaje(exito);
         this.cargar();
       },
-      error: () => this.error.set(MSG.errorOperacion),
+      // El backend explica qué regla se rompió (límite de visitas, pagos que no suman, etc.)
+      error: (respuesta: HttpErrorResponse) => this.error.set(respuesta.error?.message ?? MSG.errorOperacion),
     });
   }
 
@@ -282,7 +287,6 @@ export class TransaccionesComponent {
 
   private formularioVacio(): CrearTransaccion {
     return {
-      precio_final: 0,
       metodoPago: MetodoPago.EFECTIVO,
       vehiculo_id: 0,
       cliente_id: 0,
