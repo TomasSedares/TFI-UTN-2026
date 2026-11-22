@@ -4,6 +4,8 @@ import lombok.*;
 import utn.programacion3.agencia_de_autos.model.enums.TipoModelo;
 
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 @Entity
 @Table(name = "modelos")
@@ -22,8 +24,12 @@ public class Modelo {
     @Column(nullable = false)
     private String nombre;
 
-    @Column(nullable = false)
-    private Integer anio;
+    // Un modelo (marca + nombre + tipo) puede tener varios años cargados
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "modelo_anios", joinColumns = @JoinColumn(name = "id_modelo"))
+    @Column(name = "anio", nullable = false)
+    @Builder.Default
+    private Set<Integer> anios = new TreeSet<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

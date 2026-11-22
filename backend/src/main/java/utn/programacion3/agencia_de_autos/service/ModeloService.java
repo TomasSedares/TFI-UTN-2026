@@ -13,6 +13,7 @@ import utn.programacion3.agencia_de_autos.repository.MarcaRepository;
 import utn.programacion3.agencia_de_autos.repository.ModeloRepository;
 
 import java.util.List;
+import java.util.TreeSet;
 
 @Service
 @RequiredArgsConstructor
@@ -28,17 +29,17 @@ public class ModeloService {
         Marca marca = marcaRepository.findById(request.getMarcaId())
                 .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
 
-        if (modeloRepository.existsByMarcaIdAndNombreIgnoreCaseAndTipoModeloAndAnio(
-                marca.getId(), request.getNombre().trim(), request.getTipoModelo(), request.getAnio())) {
+        if (modeloRepository.existsByMarcaIdAndNombreIgnoreCaseAndTipoModelo(
+                marca.getId(), request.getNombre().trim(), request.getTipoModelo())) {
             throw new NegocioException("Ya existe el modelo " + request.getNombre().trim()
-                    + " (" + request.getTipoModelo() + ") " + request.getAnio()
+                    + " (" + request.getTipoModelo() + ")"
                     + " para la marca " + marca.getNombre() + ".");
         }
 
         Modelo modelo = modeloMapper.toEntity(request);
 
         modelo.setMarca(marca);
-        modelo.setAnio(request.getAnio());
+        modelo.setAnios(new TreeSet<>(request.getAnios()));
         modelo.setTipoModelo(request.getTipoModelo());
         if (request.getActivo() != null)
         { modelo.setActivo(request.getActivo()); }
@@ -77,16 +78,16 @@ public class ModeloService {
         Marca marca = marcaRepository.findById(request.getMarcaId())
                 .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
 
-        if (modeloRepository.existsByMarcaIdAndNombreIgnoreCaseAndTipoModeloAndAnioAndIdNot(
-                marca.getId(), request.getNombre().trim(), request.getTipoModelo(), request.getAnio(), id)) {
+        if (modeloRepository.existsByMarcaIdAndNombreIgnoreCaseAndTipoModeloAndIdNot(
+                marca.getId(), request.getNombre().trim(), request.getTipoModelo(), id)) {
             throw new NegocioException("Ya existe el modelo " + request.getNombre().trim()
-                    + " (" + request.getTipoModelo() + ") " + request.getAnio()
+                    + " (" + request.getTipoModelo() + ")"
                     + " para la marca " + marca.getNombre() + ".");
         }
 
         modelo.setNombre(request.getNombre());
         modelo.setMarca(marca);
-        modelo.setAnio(request.getAnio());
+        modelo.setAnios(new TreeSet<>(request.getAnios()));
         modelo.setTipoModelo(request.getTipoModelo());
         if (request.getActivo() != null) {
             modelo.setActivo(request.getActivo());

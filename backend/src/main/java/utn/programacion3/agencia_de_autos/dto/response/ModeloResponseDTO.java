@@ -1,5 +1,6 @@
 package utn.programacion3.agencia_de_autos.dto.response;
 
+import java.util.Set;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,7 +19,7 @@ public class ModeloResponseDTO {
 
     private Long marcaId;
 
-    private Integer anio;
+    private Set<Integer> anios;
 
     private TipoModelo tipoModelo;
 

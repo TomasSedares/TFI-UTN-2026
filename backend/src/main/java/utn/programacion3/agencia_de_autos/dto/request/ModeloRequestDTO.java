@@ -2,7 +2,9 @@ package utn.programacion3.agencia_de_autos.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import utn.programacion3.agencia_de_autos.model.enums.TipoModelo;
@@ -15,9 +17,9 @@ public class ModeloRequestDTO {
     @NotBlank(message = "El nombre del modelo es obligatorio")
     private String nombre;
 
-    @Schema(description = "Año de fabricación del modelo", example = "2022", minimum = "1900")
-    @NotNull(message = "El año es obligatorio")
-    private Integer anio;
+    @Schema(description = "Años en los que se fabricó el modelo", example = "[2022, 2023]")
+    @NotEmpty(message = "Cargá al menos un año")
+    private Set<Integer> anios;
 
     @Schema(description = "Categoría o tipo del modelo", example = "AUTO",
             allowableValues = {"AUTO", "MOTO", "CAMIONETA", "SUV", "UTILITARIO"})
