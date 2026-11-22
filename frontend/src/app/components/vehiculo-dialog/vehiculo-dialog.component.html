@@ -30,7 +30,7 @@
       <mat-label>Modelo</mat-label>
       <mat-select formControlName="modeloId">
         @for (modelo of modelosDeMarca(); track modelo.id) {
-          <mat-option [value]="modelo.id">{{ modelo.nombre }} · {{ modelo.tipoModelo }}.</mat-option>
+          <mat-option [value]="modelo.id">{{ modelo.nombre }} · {{ etiquetaTipoModelo[modelo.tipoModelo] }}</mat-option>
         }
       </mat-select>
       <mat-error>{{ mensajeError('modeloId') }}</mat-error>
@@ -39,8 +39,8 @@
     <mat-form-field appearance="outline">
       <mat-label>Año</mat-label>
       <mat-select formControlName="anio">
-        @for (anio of aniosDisponibles(); track anio) {
-          <mat-option [value]="anio">{{ anio }}</mat-option>
+        @for (anioOpcion of aniosDisponibles(); track anioOpcion) {
+          <mat-option [value]="anioOpcion">{{ anioOpcion }}</mat-option>
         }
       </mat-select>
       @if (!aniosDisponibles().length) { <mat-hint>Elegí primero un modelo</mat-hint> }

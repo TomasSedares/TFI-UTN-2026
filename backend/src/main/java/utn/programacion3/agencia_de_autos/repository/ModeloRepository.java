@@ -7,9 +7,10 @@ import utn.programacion3.agencia_de_autos.model.enums.TipoModelo;
 @Repository
 public interface ModeloRepository extends JpaRepository<Modelo, Long> {
 
-    // Un modelo se identifica por marca + nombre + tipo; el año es solo un dato del modelo
-    boolean existsByMarcaIdAndNombreIgnoreCaseAndTipoModelo(Long marcaId, String nombre, TipoModelo tipoModelo);
+    // Un modelo se identifica por marca + nombre + tipo + año: el mismo modelo puede cargarse en varios años
+    boolean existsByMarcaIdAndNombreIgnoreCaseAndTipoModeloAndAnio(Long marcaId, String nombre,
+                                                                   TipoModelo tipoModelo, Integer anio);
 
-    boolean existsByMarcaIdAndNombreIgnoreCaseAndTipoModeloAndIdNot(Long marcaId, String nombre,
-                                                                    TipoModelo tipoModelo, Long id);
+    boolean existsByMarcaIdAndNombreIgnoreCaseAndTipoModeloAndAnioAndIdNot(Long marcaId, String nombre,
+                                                                           TipoModelo tipoModelo, Integer anio, Long id);
 }

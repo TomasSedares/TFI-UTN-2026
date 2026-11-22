@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTableModule } from '@angular/material/table';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   ConfirmarDialogComponent,
@@ -126,7 +127,7 @@ export class ModelosComponent {
         this.mostrarMensaje(exito);
         this.cargar();
       },
-      error: () => this.error.set(fallo),
+      error: (respuesta: HttpErrorResponse) => this.error.set(respuesta.error?.message ?? fallo),
     });
   }
 

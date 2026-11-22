@@ -5,7 +5,6 @@
     </div>
     <mat-card-content class="contenido">
         <h3 class="titulo">{{v.modeloNombre}} {{v.anio}}</h3>
-        <p class="precio">$ {{ formatearNumero(v.precioVenta) }}</p>
         <div class="caracteristicas">
             <span><mat-icon>speed</mat-icon>{{ formatearNumero(v.kilometraje) }} km</span>
             <span><mat-icon>local_gas_station</mat-icon>{{ etiquetaCombustible[v.tipoCombustible] }}</span>

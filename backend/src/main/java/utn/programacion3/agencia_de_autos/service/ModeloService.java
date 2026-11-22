@@ -28,11 +28,11 @@ public class ModeloService {
         Marca marca = marcaRepository.findById(request.getMarcaId())
                 .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
 
-        if (modeloRepository.existsByMarcaIdAndNombreIgnoreCaseAndTipoModelo(
-                marca.getId(), request.getNombre().trim(), request.getTipoModelo())) {
+        if (modeloRepository.existsByMarcaIdAndNombreIgnoreCaseAndTipoModeloAndAnio(
+                marca.getId(), request.getNombre().trim(), request.getTipoModelo(), request.getAnio())) {
             throw new NegocioException("Ya existe el modelo " + request.getNombre().trim()
-                    + " (" + request.getTipoModelo() + ") para la marca " + marca.getNombre()
-                    + ". El año se carga en cada vehículo, no hace falta repetir el modelo.");
+                    + " (" + request.getTipoModelo() + ") " + request.getAnio()
+                    + " para la marca " + marca.getNombre() + ".");
         }
 
         Modelo modelo = modeloMapper.toEntity(request);
@@ -77,10 +77,11 @@ public class ModeloService {
         Marca marca = marcaRepository.findById(request.getMarcaId())
                 .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
 
-        if (modeloRepository.existsByMarcaIdAndNombreIgnoreCaseAndTipoModeloAndIdNot(
-                marca.getId(), request.getNombre().trim(), request.getTipoModelo(), id)) {
+        if (modeloRepository.existsByMarcaIdAndNombreIgnoreCaseAndTipoModeloAndAnioAndIdNot(
+                marca.getId(), request.getNombre().trim(), request.getTipoModelo(), request.getAnio(), id)) {
             throw new NegocioException("Ya existe el modelo " + request.getNombre().trim()
-                    + " (" + request.getTipoModelo() + ") para la marca " + marca.getNombre() + ".");
+                    + " (" + request.getTipoModelo() + ") " + request.getAnio()
+                    + " para la marca " + marca.getNombre() + ".");
         }
 
         modelo.setNombre(request.getNombre());
