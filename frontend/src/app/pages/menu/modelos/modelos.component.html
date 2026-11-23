@@ -29,8 +29,8 @@
         </ng-container>
 
         <ng-container matColumnDef="anio">
-          <th mat-header-cell *matHeaderCellDef>Año</th>
-          <td mat-cell *matCellDef="let modelo">{{ modelo.anio }}</td>
+          <th mat-header-cell *matHeaderCellDef>Años</th>
+          <td mat-cell *matCellDef="let modelo">{{ modelo.anios.join(', ') }}</td>
         </ng-container>
 
         <ng-container matColumnDef="tipo">

@@ -18,7 +18,7 @@ const ANIO_MINIMO = 1990;
 const ANIO_MAXIMO = new Date().getFullYear() + 1;
 
 const MSG = {
-  camposObligatorios: 'Completá marca, nombre, año y tipo.',
+  camposObligatorios: 'Completá marca, nombre, tipo y al menos un año.',
 };
 
 @Component({
@@ -40,21 +40,22 @@ export class ModeloDialogComponent {
 
   protected readonly esEdicion = this.data.modelo !== null;
   // Desplegable de años: del próximo año modelo hasta 1990 (si el modelo ya tiene un año anterior, se conserva)
-  protected readonly anios = this.armarAnios();
+  protected readonly aniosDisponibles = this.armarAnios();
   protected readonly tiposModelo = Object.values(TipoModelo);
   protected readonly etiquetaTipoModelo = ETIQUETA_TIPO_MODELO;
   protected readonly error = signal('');
   protected marcaId: number | null = this.data.modelo?.marcaId ?? null;
   protected nombre = this.data.modelo?.nombre ?? '';
-  protected anio: number | null = this.data.modelo?.anio ?? null;
+  protected aniosSeleccionados: number[] = [...(this.data.modelo?.anios ?? [])];
   protected tipoModelo: TipoModelo | null = this.data.modelo?.tipoModelo ?? null;
   protected activo = this.data.modelo?.activo ?? true;
 
   private armarAnios(): number[] {
     const anios: number[] = [];
     for (let anio = ANIO_MAXIMO; anio >= ANIO_MINIMO; anio--) anios.push(anio);
-    const anioActual = this.data.modelo?.anio;
-    if (anioActual && !anios.includes(anioActual)) anios.push(anioActual);
+    for (const anioGuardado of this.data.modelo?.anios ?? []) {
+      if (!anios.includes(anioGuardado)) anios.push(anioGuardado);
+    }
     return anios.sort((anioA, anioB) => anioB - anioA);
   }
 
@@ -62,14 +63,14 @@ export class ModeloDialogComponent {
 
     const nombre = this.nombre.trim();
 
-    if (!this.marcaId || !nombre || !this.anio || !this.tipoModelo) {
+    if (!this.marcaId || !nombre || !this.aniosSeleccionados.length || !this.tipoModelo) {
       this.error.set(MSG.camposObligatorios);
       return;
     }
 
     this.dialogRef.close({
       nombre,
-      anio: this.anio,
+      anios: [...this.aniosSeleccionados].sort((anioA, anioB) => anioA - anioB),
       tipoModelo: this.tipoModelo,
       marcaId: this.marcaId,
       activo: this.activo,

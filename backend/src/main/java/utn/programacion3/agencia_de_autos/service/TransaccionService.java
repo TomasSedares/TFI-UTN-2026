@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import utn.programacion3.agencia_de_autos.dto.request.AsignarVisitaRequestDTO;
+import utn.programacion3.agencia_de_autos.dto.request.EditarTransaccionRequestDTO;
 import utn.programacion3.agencia_de_autos.dto.request.PagoRequestDTO;
 import utn.programacion3.agencia_de_autos.dto.request.RegistrarPagosRequestDTO;
 import utn.programacion3.agencia_de_autos.dto.request.SolicitudTransaccionRequestDTO;
@@ -226,6 +227,46 @@ public class TransaccionService {
         return aRespuesta(transaccionRepository.save(transaccion));
     }
 
+
+    // Edición de una visita (fecha, observaciones) o de una reserva/seña (observaciones, método de pago)
+    @Transactional
+    public TransaccionResponseDTO editar(Long id, EditarTransaccionRequestDTO dto, String emailActor) {
+
+        Transaccion transaccion = buscarEntityPorId(id);
+        Transaccion snapshotAnterior = crearSnapshot(transaccion);
+        Usuario actor = usuarioService.buscarEntityPorEmail(emailActor);
+        EstadoTransaccion estadoActual = transaccion.getEstadoTransaccion();
+
+        if (estadoActual == EstadoTransaccion.CANCELADO || estadoActual == EstadoTransaccion.VENDIDO)
+            throw new TransaccionNoModificableException("No se puede editar una transacción " + estadoActual);
+
+        boolean esAdministrador = actor.getRolUsuario() == Rol.ADMINISTRADOR;
+        boolean esVendedorDeLaTransaccion = transaccion.getVendedor() != null
+                && transaccion.getVendedor().getId().equals(actor.getId());
+        if (!esAdministrador && !esVendedorDeLaTransaccion)
+            throw new NegocioException("Solo el vendedor asignado o un administrador pueden editar esta transacción");
+
+        if (estadoActual == EstadoTransaccion.SOLICITAR) {
+            if (dto.getFechaVisita() != null) {
+                if (transaccion.getVendedor() == null)
+                    throw new NegocioException("Para agendar la visita primero tiene que estar asignada a un vendedor");
+                if (dto.getFechaVisita().isAfter(LocalDateTime.now().plusDays(DIAS_MAXIMOS_HASTA_LA_VISITA)))
+                    throw new NegocioException("La visita no puede agendarse con más de "
+                            + DIAS_MAXIMOS_HASTA_LA_VISITA + " días de anticipación");
+                transaccion.setFecha_visita(dto.getFechaVisita());
+            }
+        } else if (dto.getMetodoPago() != null) {
+            transaccion.setMetodoPago(dto.getMetodoPago());
+        }
+
+        if (dto.getObservaciones() != null)
+            transaccion.setObservaciones(dto.getObservaciones().trim());
+
+        if (snapshotAnterior.getMetodoPago() != transaccion.getMetodoPago())
+            auditoriaTransaccionService.registrarCambio(snapshotAnterior, transaccion);
+
+        return aRespuesta(transaccionRepository.save(transaccion));
+    }
 
     @Transactional(readOnly = true)
     public List<TransaccionResponseDTO> listarPorCliente(String emailCliente) {
@@ -490,6 +531,7 @@ public class TransaccionService {
                 .vendedor(transaccion.getVendedor())
                 .cliente(transaccion.getCliente())
                 .vehiculo(transaccion.getVehiculo())
+                .metodoPago(transaccion.getMetodoPago())
                 .build();
     }
 }

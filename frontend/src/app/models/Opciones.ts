@@ -29,7 +29,7 @@ export interface Modelo {
   nombre: string;
   marca: string;
   marcaId: number;
-  anio: number;
+  anios: number[];
   tipoModelo: TipoModelo;
   activo: boolean;
 }

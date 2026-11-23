@@ -119,31 +119,17 @@ export class VehiculoDialogComponent {
     ),
   );
 
-  // El selector muestra cada modelo una sola vez (nombre + tipo), sin importar cuántos años tenga cargados
-  protected readonly modelosDeMarca = computed(() => {
-    const modeloPorClave = new Map<string, Modelo>();
-    for (const modelo of this.modelosActivosDeMarca()) {
-      const clave = `${modelo.nombre.toLowerCase()}|${modelo.tipoModelo}`;
-      const representante = modeloPorClave.get(clave);
-      if (!representante || modelo.id === this.vehiculo?.modeloId) modeloPorClave.set(clave, modelo);
-    }
-    return [...modeloPorClave.values()];
-  });
+  protected readonly modelosDeMarca = this.modelosActivosDeMarca;
 
-  // Mismo modelo cargado en distintos años: el elegido y sus "hermanos" (misma marca, nombre y tipo)
-  private readonly modelosHermanos = computed(() => {
+  // Solo se pueden elegir los años que están cargados en "Modelos" para el modelo elegido
+  protected readonly aniosDisponibles = computed(() => {
     const modeloElegido = this.data.modelos.find(modelo => modelo.id === this.modeloSeleccionado());
-    if (!modeloElegido) return [];
-    return this.modelosActivosDeMarca().filter(
-      modelo => modelo.nombre.toLowerCase() === modeloElegido.nombre.toLowerCase()
-        && modelo.tipoModelo === modeloElegido.tipoModelo,
-    );
+    const aniosDelModelo = modeloElegido?.anios ?? [];
+    // Al editar se conserva el año actual del vehículo aunque ya no figure en el modelo
+    const anioActual = this.vehiculo?.modeloId === modeloElegido?.id ? this.vehiculo?.anio : undefined;
+    const aniosUnicos = new Set([...aniosDelModelo, ...(anioActual ? [anioActual] : [])]);
+    return [...aniosUnicos].sort((anioA, anioB) => anioB - anioA);
   });
-
-  // Solo se pueden elegir los años que están cargados en "Modelos" para ese modelo
-  protected readonly aniosDisponibles = computed(() =>
-    [...new Set(this.modelosHermanos().map(modelo => modelo.anio))].sort((anioA, anioB) => anioB - anioA),
-  );
 
   constructor() {
     this.formulario.controls.marcaId.valueChanges
@@ -212,7 +198,7 @@ export class VehiculoDialogComponent {
       anio: valores.anio!,
       precioAdquisicion: valores.precioAdquisicion!,
       precioVenta: valores.precioVenta!,
-      modeloId: this.idDelModeloConElAnio(valores.modeloId!, valores.anio!),
+      modeloId: valores.modeloId!,
       kilometraje: valores.kilometraje!,
       color: valores.color.trim(),
       descripcion: valores.descripcion.trim(),
@@ -228,12 +214,6 @@ export class VehiculoDialogComponent {
       // Solo hay que actualizar una imagen ya guardada si pasó a ser la principal
       imagenPrincipalExistente: principalActual && principalActual.id !== principalInicial?.id ? principalActual : null,
     });
-  }
-
-  // Cada año de un modelo es una fila en "Modelos": se guarda el vehículo con la fila del año elegido
-  private idDelModeloConElAnio(modeloIdElegido: number, anioElegido: number): number {
-    const modeloDelAnio = this.modelosHermanos().find(modelo => modelo.anio === anioElegido);
-    return modeloDelAnio?.id ?? modeloIdElegido;
   }
 
   protected cerrar(): void {

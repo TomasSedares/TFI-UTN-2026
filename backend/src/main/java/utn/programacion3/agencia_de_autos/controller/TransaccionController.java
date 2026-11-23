@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import utn.programacion3.agencia_de_autos.dto.request.AsignarVisitaRequestDTO;
+import utn.programacion3.agencia_de_autos.dto.request.EditarTransaccionRequestDTO;
 import utn.programacion3.agencia_de_autos.dto.request.RegistrarPagosRequestDTO;
 import utn.programacion3.agencia_de_autos.dto.request.SolicitudTransaccionRequestDTO;
 import utn.programacion3.agencia_de_autos.dto.request.TransaccionFilterDTO;
@@ -156,6 +157,25 @@ public class TransaccionController {
     @PutMapping("/{id}")
     public ResponseEntity<TransaccionResponseDTO> actualizarTransaccion(@PathVariable Long id, @Validated(Groups.Actualizar.class) @RequestBody TransaccionRequestDTO dto) {
         return ResponseEntity.ok(transaccionService.actualizar(id, dto));
+    }
+
+    @Operation(
+            summary = "Editar una visita o una reserva",
+            description = "Permite al vendedor asignado o a un administrador modificar la fecha de una visita, las observaciones o el método de pago de una reserva."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Transacción editada correctamente"),
+            @ApiResponse(responseCode = "400", description = "La transacción no se puede editar o los datos no cumplen las reglas"),
+            @ApiResponse(responseCode = "404", description = "La transacción especificada no fue encontrada"),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado. Se requiere rol ADMINISTRADOR o VENDEDOR")
+    })
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'VENDEDOR')")
+    @PatchMapping("/{id}/editar")
+    public ResponseEntity<TransaccionResponseDTO> editarTransaccion(
+            @PathVariable Long id,
+            @Valid @RequestBody EditarTransaccionRequestDTO dto,
+            Authentication authentication) {
+        return ResponseEntity.ok(transaccionService.editar(id, dto, authentication.getName()));
     }
 
     @Operation(
