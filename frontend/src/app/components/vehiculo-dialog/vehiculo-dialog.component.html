@@ -1,4 +1,4 @@
-<h2 mat-dialog-title>{{ esEdicion ? 'Editar vehículo' : 'Nuevo vehículo' }}</h2>
+<h2 mat-dialog-title>{{ esEdicion ? 'Editar vehículo' : esReposicion ? 'Volver a poner en venta' : 'Nuevo vehículo' }}</h2>
 
 <form class="dialog-form" [formGroup]="formulario" (ngSubmit)="confirmar()">
 
@@ -116,6 +116,6 @@
 
   <mat-dialog-actions align="end">
     <button type="button" matButton="outlined" class="button-outline" (click)="cerrar()">Volver</button>
-    <button matButton="filled" class="button-dark" type="submit">{{ esEdicion ? 'Guardar' : 'Cargar vehículo' }}</button>
+    <button matButton="filled" class="button-dark" type="submit">{{ esEdicion ? 'Guardar' : esReposicion ? 'Poner en venta' : 'Cargar vehículo' }}</button>
   </mat-dialog-actions>
 </form>

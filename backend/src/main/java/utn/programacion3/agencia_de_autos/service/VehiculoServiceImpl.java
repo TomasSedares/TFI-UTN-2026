@@ -27,6 +27,8 @@ import utn.programacion3.agencia_de_autos.model.enums.EstadoTransaccion;
 import utn.programacion3.agencia_de_autos.model.enums.EstadoVehiculo;
 import utn.programacion3.agencia_de_autos.model.enums.Rol;
 import utn.programacion3.agencia_de_autos.repository.ModeloRepository;
+import utn.programacion3.agencia_de_autos.repository.FavoritoRepository;
+import utn.programacion3.agencia_de_autos.repository.ImagenVehiculoRepository;
 import utn.programacion3.agencia_de_autos.repository.TransaccionRepository;
 import utn.programacion3.agencia_de_autos.repository.VehiculoRepository;
 import utn.programacion3.agencia_de_autos.repository.VehiculoSpecification;
@@ -45,6 +47,8 @@ public class VehiculoServiceImpl implements VehiculoService {
     private final VehiculoMapper vehiculoMapper;
     private final ImagenVehiculoService imagenVehiculoService;
     private final TransaccionRepository transaccionRepository;
+    private final ImagenVehiculoRepository imagenVehiculoRepository;
+    private final FavoritoRepository favoritoRepository;
 
     @Override
     public VehiculoResponseDTO crearVehiculo(VehiculoRequestDTO request) {
@@ -65,6 +69,25 @@ public class VehiculoServiceImpl implements VehiculoService {
         Vehiculo vehiculoGuardado = vehiculoRepository.save(vehiculo);
 
         return vehiculoMapper.toResponse(vehiculoGuardado);
+    }
+
+    // Un vehículo vendido vuelve a ponerse en venta: se crea uno nuevo y el anterior se archiva (su venta queda en el historial)
+    @Override
+    @Transactional
+    public VehiculoResponseDTO reponerEnVenta(Long idVehiculoVendido, VehiculoRequestDTO request) {
+
+        Vehiculo vehiculoVendido = vehiculoRepository.findById(idVehiculoVendido)
+                .orElseThrow(VehiculoNoEncontradoException::new);
+
+        if (vehiculoVendido.getEstado() != EstadoVehiculo.VENDIDO || Boolean.TRUE.equals(vehiculoVendido.getArchivado()))
+            throw new NegocioException("Solo se puede volver a poner en venta un vehículo vendido.");
+
+        VehiculoResponseDTO vehiculoNuevo = crearVehiculo(request);
+
+        vehiculoVendido.setArchivado(true);
+        vehiculoRepository.save(vehiculoVendido);
+
+        return vehiculoNuevo;
     }
 
     private void validarModeloYMarcaActivos(Modelo modelo) {
@@ -143,9 +166,10 @@ public class VehiculoServiceImpl implements VehiculoService {
         Vehiculo vehiculo = vehiculoRepository.findById(id)
                 .orElseThrow(VehiculoNoEncontradoException::new);
 
-        if (vehiculo.getEstado() == EstadoVehiculo.VENDIDO
-                && vehiculo.getPrecioAdquisicion().compareTo(request.getPrecioAdquisicion()) != 0) {
-            throw new NegocioException("No se puede modificar el precio de adquisición de un vehículo VENDIDO.");
+        // Un vehículo vendido, reservado o señado tiene una operación en curso: no se edita
+        if (vehiculo.getEstado() == EstadoVehiculo.VENDIDO || vehiculo.getEstado() == EstadoVehiculo.RESERVADO) {
+            throw new NegocioException("No se puede editar un vehículo "
+                    + (vehiculo.getEstado() == EstadoVehiculo.VENDIDO ? "vendido" : "reservado o señado") + ".");
         }
 
         Modelo modelo = modeloRepository.findById(request.getModeloId())
@@ -231,7 +255,7 @@ public class VehiculoServiceImpl implements VehiculoService {
     @Transactional(readOnly = true)
     public Page<VehiculoGestionResponseDTO> listarParaGestion(Pageable pageable) {
 
-        return vehiculoRepository.findAll(pageable)
+        return vehiculoRepository.findByArchivadoFalse(pageable)
                 .map(vehiculoMapper::toGestionResponse);
     }
 
@@ -307,10 +331,21 @@ public class VehiculoServiceImpl implements VehiculoService {
 
 
     @Override
+    @Transactional
     public void eliminarVehiculo(Long id) {
 
         Vehiculo vehiculo = vehiculoRepository.findById(id)
                 .orElseThrow(VehiculoNoEncontradoException::new);
+
+        // Un vehículo con operaciones registradas (solicitudes, reservas, señas o ventas) no se puede borrar
+        if (transaccionRepository.existsByVehiculoId(id)) {
+            throw new NegocioException("No se puede eliminar el vehículo " + vehiculo.getPatente()
+                    + " porque tiene transacciones asociadas (solicitudes, reservas, señas o ventas).");
+        }
+
+        // Las imágenes y los favoritos dependen del vehículo: se eliminan junto con él
+        imagenVehiculoRepository.deleteByVehiculoId(id);
+        favoritoRepository.deleteByVehiculoId(id);
 
         vehiculoRepository.delete(vehiculo);
     }

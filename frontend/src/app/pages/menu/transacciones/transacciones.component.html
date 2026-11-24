@@ -37,7 +37,7 @@
   @if (error() && !modal) { <div class="notice error-notice">{{ error() }}</div> }
 
   <section class="table-card" aria-label="Listado de transacciones">
-    <div class="table-scroll">
+    <div class="table-scroll" appScrollSuperior>
       <table mat-table [dataSource]="transacciones()?.content ?? []">
 
         <ng-container matColumnDef="vehiculo">
@@ -76,6 +76,12 @@
         <ng-container matColumnDef="acciones">
           <th mat-header-cell *matHeaderCellDef>Acciones</th>
           <td mat-cell *matCellDef="let t">
+            @if (puedeEditar(t)) {
+            <button matButton="outlined" class="button-outline" type="button" (click)="abrirEditar(t)">Editar</button>
+            }
+            @if (administradorPuedeCancelarSolicitud(t)) {
+            <button matButton="filled" class="button-danger" type="button" (click)="cancelar(t)">Dar de baja</button>
+            }
             @if (estaLibre(t)) {
             <button matButton="outlined" class="button-outline" type="button" (click)="asignarme(t)">Asignarme</button>
             <button matButton="filled" class="button-danger" type="button" (click)="cancelar(t)">Cancelar</button>

@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
+import { ScrollSuperiorDirective } from '../../../directives/scroll-superior.directive';
 import {
   AccionUsuario,
   AuditoriaTransaccion,
@@ -65,6 +66,7 @@ const FORMATO_PRECIO = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2
     MatPaginatorModule,
     MatSelectModule,
     MatTableModule,
+    ScrollSuperiorDirective,
   ],
   providers: [{ provide: MAT_DATE_LOCALE, useValue: 'es-AR' }, provideNativeDateAdapter()],
   selector: 'app-historial-transacciones',

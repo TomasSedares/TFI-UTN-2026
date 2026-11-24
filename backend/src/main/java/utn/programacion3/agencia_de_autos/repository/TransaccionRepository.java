@@ -19,6 +19,8 @@ public interface TransaccionRepository extends
         JpaRepository<Transaccion,Long>,
         JpaSpecificationExecutor<Transaccion> {
 
+    boolean existsByVehiculoId(Long vehiculoId);
+
     boolean existsByVehiculoIdAndClienteEmailAndEstadoTransaccionNot(
             Long vehiculoId,
             String clienteEmail,

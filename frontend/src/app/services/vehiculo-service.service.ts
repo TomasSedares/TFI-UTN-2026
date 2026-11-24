@@ -38,6 +38,10 @@ export class VehiculoService {
         return this.http.post<VehiculoGestion>(VEHICULOS_URL, vehiculo);
     }
 
+    reponerEnVenta(idVehiculoVendido: number, vehiculo: VehiculoRequest): Observable<VehiculoGestion> {
+        return this.http.post<VehiculoGestion>(`${VEHICULOS_URL}/${idVehiculoVendido}/reponer`, vehiculo);
+    }
+
     actualizar(id: number, vehiculo: VehiculoRequest): Observable<VehiculoGestion> {
         return this.http.put<VehiculoGestion>(`${VEHICULOS_URL}/${id}`, vehiculo);
     }

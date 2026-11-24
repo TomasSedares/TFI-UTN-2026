@@ -23,6 +23,8 @@ export interface VehiculoDialogData {
   marcas: Marca[];
   modelos: Modelo[];
   imagenesExistentes: Imagen[];
+  // Vehículo vendido que vuelve a ponerse en venta: se carga como uno nuevo con los datos del anterior
+  reponer?: boolean;
 }
 
 // Imagen en edición dentro del diálogo: las ya guardadas tienen id, las recién elegidas no
@@ -66,8 +68,9 @@ export class VehiculoDialogComponent {
 
   private readonly vehiculo = this.data.vehiculo;
 
-  protected readonly esEdicion = this.vehiculo !== null;
-  protected readonly esVendido = this.vehiculo?.estado === EstadoVehiculo.VENDIDO;
+  protected readonly esReposicion = this.data.reponer === true;
+  protected readonly esEdicion = this.vehiculo !== null && !this.esReposicion;
+  protected readonly esVendido = !this.esReposicion && this.vehiculo?.estado === EstadoVehiculo.VENDIDO;
   protected readonly combustibles = Object.values(TipoCombustible);
   protected readonly transmisiones = Object.values(TipoTransmision);
   protected readonly etiquetaCombustible = ETIQUETA_COMBUSTIBLE;
@@ -75,17 +78,22 @@ export class VehiculoDialogComponent {
 
   // Solo se pueden cargar vehículos de marcas y modelos activos (el actual se conserva al editar)
   protected readonly marcasActivas = this.data.marcas.filter(
-    marca => marca.activo || marca.id === this.vehiculo?.marcaId,
+    marca => marca.activo || (this.esEdicion && marca.id === this.vehiculo?.marcaId),
   );
 
   protected readonly imagenes = signal<ImagenEnEdicion[]>(
-    this.data.imagenesExistentes.map(imagen => ({ id: imagen.id, url: imagen.url, esPrincipal: imagen.esPrincipal })),
+    // Al reponer en venta las imágenes se copian como nuevas (sin id) para el vehículo nuevo
+    this.data.imagenesExistentes.map(imagen => ({
+      id: this.esReposicion ? null : imagen.id,
+      url: imagen.url,
+      esPrincipal: imagen.esPrincipal,
+    })),
   );
   protected readonly errorImagen = signal('');
   private readonly idsImagenesAEliminar: number[] = [];
 
   protected readonly formulario = this.fb.group({
-    patente: [this.vehiculo?.patente ?? '', [Validators.required, Validators.pattern(PATENTE_REGEX)]],
+    patente: [this.esReposicion ? '' : (this.vehiculo?.patente ?? ''), [Validators.required, Validators.pattern(PATENTE_REGEX)]],
     marcaId: this.fb.control<number | null>(this.vehiculo?.marcaId ?? null, Validators.required),
     modeloId: this.fb.control<number | null>(this.vehiculo?.modeloId ?? null, Validators.required),
     anio: this.fb.control<number | null>(this.vehiculo?.anio ?? null, Validators.required),
@@ -115,7 +123,7 @@ export class VehiculoDialogComponent {
   private readonly modelosActivosDeMarca = computed(() =>
     this.data.modelos.filter(
       modelo => modelo.marcaId === this.marcaSeleccionada()
-        && (modelo.activo || modelo.id === this.vehiculo?.modeloId),
+        && (modelo.activo || (this.esEdicion && modelo.id === this.vehiculo?.modeloId)),
     ),
   );
 
@@ -202,7 +210,7 @@ export class VehiculoDialogComponent {
       kilometraje: valores.kilometraje!,
       color: valores.color.trim(),
       descripcion: valores.descripcion.trim(),
-      estado: this.vehiculo?.estado ?? EstadoVehiculo.DISPONIBLE,
+      estado: this.esEdicion ? (this.vehiculo?.estado ?? EstadoVehiculo.DISPONIBLE) : EstadoVehiculo.DISPONIBLE,
       tipoTransmision: valores.tipoTransmision!,
       tipoCombustible: valores.tipoCombustible!,
     };

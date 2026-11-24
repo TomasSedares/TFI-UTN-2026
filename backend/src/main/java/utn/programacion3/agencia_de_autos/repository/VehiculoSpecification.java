@@ -17,6 +17,9 @@ public class VehiculoSpecification {
 
             List<Predicate> predicates = new ArrayList<>();
 
+            // Los vehículos vendidos que ya se repusieron en venta como uno nuevo no se listan
+            predicates.add(cb.isFalse(root.get("archivado")));
+
             if (filtros.getMarcaId() != null) {
                 predicates.add(
                         cb.equal(

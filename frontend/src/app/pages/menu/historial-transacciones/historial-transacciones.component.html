@@ -101,7 +101,7 @@
   </form>
 
   <section class="table-card" aria-label="Historial de cambios de transacciones">
-    <div class="table-scroll">
+    <div class="table-scroll" appScrollSuperior>
       <table mat-table [dataSource]="auditorias()?.content ?? []">
         <ng-container matColumnDef="fecha">
           <th mat-header-cell *matHeaderCellDef>Fecha</th>
@@ -146,7 +146,7 @@
   </section>
   } @else {
   <section class="table-card" aria-label="Historial de usuarios">
-    <div class="table-scroll">
+    <div class="table-scroll" appScrollSuperior>
       <table mat-table [dataSource]="auditoriasUsuarios()?.content ?? []">
         <ng-container matColumnDef="fecha">
           <th mat-header-cell *matHeaderCellDef>Fecha</th>

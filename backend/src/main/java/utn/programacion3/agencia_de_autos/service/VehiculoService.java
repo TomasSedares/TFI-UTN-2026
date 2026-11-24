@@ -21,6 +21,8 @@ public interface VehiculoService {
 
     VehiculoResponseDTO crearVehiculo(VehiculoRequestDTO request);
 
+    VehiculoResponseDTO reponerEnVenta(Long idVehiculoVendido, VehiculoRequestDTO request);
+
     Vehiculo obtenerVehiculoEntityPorId(Long id);
 
     VehiculoResponseDTO obtenerVehiculoPorId(Long id, Authentication authentication);

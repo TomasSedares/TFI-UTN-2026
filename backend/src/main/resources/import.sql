@@ -99,3 +99,10 @@ INSERT INTO favoritos (usuario_id, vehiculo_id) VALUES ((SELECT id FROM usuario 
 -- Fechas de las transacciones sembradas (comisiones por venta y vencimiento de reservas)
 UPDATE transaccion SET fecha_venta = updated_at WHERE estado_transaccion = 'VENDIDO' AND fecha_venta IS NULL;
 UPDATE transaccion SET fecha_reserva = CAST(created_at AS TIMESTAMP) WHERE estado_transaccion = 'RESERVA' AND fecha_reserva IS NULL;
+-- Pagos de las transacciones sembradas (seña + saldo de venta = precio de venta del vehículo)
+INSERT INTO pago_transaccion (transaccion_id, metodo_pago, tipo, monto, fecha) SELECT t.id, 'EFECTIVO', 'SENIA', 2000000, CAST(t.created_at AS TIMESTAMP) FROM transaccion t JOIN vehiculos v ON v.id_vehiculo = t.vehiculo_id WHERE v.patente = 'AB123CD';
+INSERT INTO pago_transaccion (transaccion_id, metodo_pago, tipo, monto, fecha) SELECT t.id, 'TRANSFERENCIA', 'VENTA', v.precio_venta - 2000000, CAST(t.updated_at AS TIMESTAMP) FROM transaccion t JOIN vehiculos v ON v.id_vehiculo = t.vehiculo_id WHERE v.patente = 'AB123CD';
+INSERT INTO pago_transaccion (transaccion_id, metodo_pago, tipo, monto, fecha) SELECT t.id, 'EFECTIVO', 'VENTA', v.precio_venta - 0, CAST(t.updated_at AS TIMESTAMP) FROM transaccion t JOIN vehiculos v ON v.id_vehiculo = t.vehiculo_id WHERE v.patente = 'GH012IJ';
+INSERT INTO pago_transaccion (transaccion_id, metodo_pago, tipo, monto, fecha) SELECT t.id, 'TRANSFERENCIA', 'SENIA', 1500000, CAST(t.created_at AS TIMESTAMP) FROM transaccion t JOIN vehiculos v ON v.id_vehiculo = t.vehiculo_id WHERE v.patente = 'KL678MN';
+INSERT INTO pago_transaccion (transaccion_id, metodo_pago, tipo, monto, fecha) SELECT t.id, 'CUOTA_BANCARIZADA', 'VENTA', v.precio_venta - 1500000, CAST(t.updated_at AS TIMESTAMP) FROM transaccion t JOIN vehiculos v ON v.id_vehiculo = t.vehiculo_id WHERE v.patente = 'KL678MN';
+INSERT INTO pago_transaccion (transaccion_id, metodo_pago, tipo, monto, fecha) SELECT t.id, 'EFECTIVO', 'SENIA', 4000000, CAST(t.created_at AS TIMESTAMP) FROM transaccion t JOIN vehiculos v ON v.id_vehiculo = t.vehiculo_id WHERE v.patente = 'CD456EF';

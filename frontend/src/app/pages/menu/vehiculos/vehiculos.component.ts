@@ -17,7 +17,7 @@ import {
 import { Imagen } from '../../../models/Imagen';
 import { ImagenService } from '../../../services/imagen.service';
 import { Marca, Modelo } from '../../../models/Opciones';
-import { ETIQUETA_ESTADO_VEHICULO, Pagina, VehiculoGestion } from '../../../models/Vehiculo';
+import { ETIQUETA_ESTADO_VEHICULO, EstadoVehiculo, Pagina, VehiculoGestion } from '../../../models/Vehiculo';
 import { AuthService } from '../../../services/auth.service';
 import { MarcaService } from '../../../services/marca.service';
 import { ModeloService } from '../../../services/modelo.service';
@@ -34,8 +34,9 @@ const MSG = {
   errorCargaImagenes: 'No se pudieron cargar las imágenes del vehículo.',
   errorCargaOpciones: 'No se pudieron cargar las marcas y modelos.',
   errorOperacion: 'No se pudo completar la operación. Revisá los datos e intentá nuevamente.',
-  errorEliminar: 'No se pudo eliminar el vehículo. Verificá que no tenga transacciones o imágenes asociadas.',
+  errorEliminar: 'No se pudo eliminar el vehículo. Intentá nuevamente más tarde.',
   creado: 'Vehículo cargado.',
+  repuesto: 'Vehículo puesto nuevamente en venta.',
   actualizado: 'Vehículo actualizado.',
   eliminado: 'Vehículo eliminado.',
 };
@@ -55,6 +56,7 @@ export class VehiculosComponent {
   private readonly auth = inject(AuthService);
 
   protected readonly isAdmin = this.auth.isAdmin;
+  protected readonly EstadoVehiculo = EstadoVehiculo;
   protected readonly columnas = ['patente', 'vehiculo', 'anio', 'precioVenta', 'estado', 'acciones'];
 
   readonly vehiculos = signal<Pagina<VehiculoGestion> | null>(null);
@@ -110,26 +112,37 @@ export class VehiculosComponent {
     });
   }
 
-  private abrirFormulario(vehiculo: VehiculoGestion | null, imagenesExistentes: Imagen[]): void {
+  // Un vehículo vendido vuelve a ponerse en venta como un vehículo nuevo: mismo formulario, datos precargados y patente vacía
+  abrirReponer(vehiculo: VehiculoGestion): void {
+    this.error.set('');
+    this.imagenService.listarPorVehiculo(vehiculo.id).subscribe({
+      next: imagenes => this.abrirFormulario(vehiculo, imagenes, true),
+      error: () => this.error.set(MSG.errorCargaImagenes),
+    });
+  }
+
+  private abrirFormulario(vehiculo: VehiculoGestion | null, imagenesExistentes: Imagen[], reponer = false): void {
     this.error.set('');
     this.dialog
       .open<VehiculoDialogComponent, VehiculoDialogData, VehiculoDialogResultado>(VehiculoDialogComponent, {
         ...TAMANIO_DIALOGO_VEHICULO,
-        data: { vehiculo, marcas: this.marcas(), modelos: this.modelos(), imagenesExistentes },
+        data: { vehiculo, marcas: this.marcas(), modelos: this.modelos(), imagenesExistentes, reponer },
       })
       .afterClosed()
       .subscribe(resultado => {
         if (!resultado) return;
 
-        const guardado$ = vehiculo
-          ? this.vehiculoService.actualizar(vehiculo.id, resultado.vehiculo)
-          : this.vehiculoService.crear(resultado.vehiculo);
+        const guardado$ = !vehiculo
+          ? this.vehiculoService.crear(resultado.vehiculo)
+          : reponer
+            ? this.vehiculoService.reponerEnVenta(vehiculo.id, resultado.vehiculo)
+            : this.vehiculoService.actualizar(vehiculo.id, resultado.vehiculo);
 
         // Primero se guarda el vehículo y después sus imágenes (necesitan el id del vehículo)
         const solicitud$ = guardado$.pipe(
           switchMap(vehiculoGuardado => this.guardarImagenes(vehiculoGuardado.id, resultado)),
         );
-        this.ejecutar(solicitud$, vehiculo ? MSG.actualizado : MSG.creado);
+        this.ejecutar(solicitud$, reponer ? MSG.repuesto : vehiculo ? MSG.actualizado : MSG.creado);
       });
   }
 
@@ -171,6 +184,11 @@ export class VehiculosComponent {
         if (!confirmado) return;
         this.ejecutar(this.vehiculoService.eliminar(vehiculo.id), MSG.eliminado, MSG.errorEliminar);
       });
+  }
+
+  // Vendido, reservado o señado: tienen una operación en curso y no se editan
+  protected puedeEditar(vehiculo: VehiculoGestion): boolean {
+    return vehiculo.estado !== EstadoVehiculo.VENDIDO && vehiculo.estado !== EstadoVehiculo.RESERVADO;
   }
 
   protected etiquetaEstado(vehiculo: VehiculoGestion): string {

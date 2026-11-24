@@ -100,6 +100,12 @@ export interface AsignarVisita {
     fechaVisita: string | null;
 }
 
+export interface EditarTransaccion {
+    fechaVisita?: string;
+    observaciones: string;
+    metodoPago?: MetodoPago;
+}
+
 export interface ActualizarTransaccion extends CrearTransaccion {
     estadoTransaccion: EstadoTransaccion;
 }

@@ -7,6 +7,7 @@ import { Observable } from 'rxjs';
 import { TransaccionService } from '../../../services/transaccion.service';
 import { Pagina } from '../../../models/Vehiculo';
 import { MatTableModule } from '@angular/material/table';
+import { ScrollSuperiorDirective } from '../../../directives/scroll-superior.directive';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -25,6 +26,7 @@ import {
   PagoRequest,
   SIN_OBSERVACIONES,
   Transaccion,
+  EditarTransaccion,
 } from '../../../models/Transacciones';
 import { MatButton } from '@angular/material/button';
 import { AuthService } from '../../../services/auth.service';
@@ -37,6 +39,7 @@ import {
   RegistrarReservaDialogComponent,
   DatosReserva,
 } from '../../../components/registrar-reserva-dialog/registrar-reserva-dialog.component';
+import { EditarTransaccionDialogComponent } from '../../../components/editar-transaccion-dialog/editar-transaccion-dialog.component';
 import { AgendarVisitaDialogComponent } from '../../../components/agendar-visita-dialog/agendar-visita-dialog.component';
 
 type Modal = 'crear' | 'cancelar';
@@ -60,6 +63,7 @@ const MSG = {
   visitaAgendada: 'Visita agendada.',
   reserva: 'Reserva registrada.',
   cancelada: 'Transacción cancelada.',
+  editada: 'Cambios guardados.',
 };
 
 @Component({
@@ -74,7 +78,8 @@ const MSG = {
     MatInputModule,
     MatSelectModule,
     MatDatepickerModule,
-    MatButton
+    MatButton,
+    ScrollSuperiorDirective,
   ],
   providers: [{ provide: MAT_DATE_LOCALE, useValue: 'es-AR' }, provideNativeDateAdapter()],
   templateUrl: './transacciones.component.html',
@@ -89,6 +94,7 @@ export class TransaccionesComponent {
   private dialogRef: MatDialogRef<unknown> | null = null;
 
   protected readonly EstadoTransaccion = EstadoTransaccion;
+  protected readonly esAdministrador = this.auth.isAdmin;
   protected readonly etiquetaEstado = ETIQUETA_ESTADO;
   protected readonly etiquetaMetodoPago = ETIQUETA_METODO_PAGO;
   protected readonly estados = signal<EstadoTransaccion[]>(Object.values(EstadoTransaccion));
@@ -199,6 +205,20 @@ export class TransaccionesComponent {
       });
   }
 
+  abrirEditar(transaccion: Transaccion): void {
+    this.error.set('');
+    this.dialog
+      .open<EditarTransaccionDialogComponent, Transaccion, EditarTransaccion>(EditarTransaccionDialogComponent, {
+        ...TAMANIO_DIALOGO,
+        data: transaccion,
+      })
+      .afterClosed()
+      .subscribe(datos => {
+        if (!datos) return;
+        this.ejecutar(this.transaccionService.editar(transaccion.id, datos), MSG.editada);
+      });
+  }
+
   abrirRegistrarReserva(transaccion: Transaccion): void {
     const vendedorId = this.vendedorId();
     if (!vendedorId) return;
@@ -212,14 +232,22 @@ export class TransaccionesComponent {
       .afterClosed()
       .subscribe(datos => {
         if (!datos) return;
-        const solicitud = this.transaccionService.actualizar(transaccion.id, {
-          ...datos,
+        const { senarAhora, ...datosReserva } = datos;
+        this.transaccionService.actualizar(transaccion.id, {
+          ...datosReserva,
           observaciones: transaccion.observaciones || SIN_OBSERVACIONES,
           vehiculo_id: transaccion.vehiculo_id,
           cliente_id: transaccion.cliente_id,
           vendedor_id: vendedorId,
+        }).subscribe({
+          next: transaccionReservada => {
+            this.mostrarMensaje(MSG.reserva);
+            this.cargar();
+            // Si eligió "Reservar y señar", se abre enseguida el registro de pagos de la seña
+            if (senarAhora) this.abrirAccion('senia', transaccionReservada);
+          },
+          error: (respuesta: HttpErrorResponse) => this.error.set(respuesta.error?.message ?? MSG.errorOperacion),
         });
-        this.ejecutar(solicitud, MSG.reserva);
       });
   }
 
@@ -311,6 +339,21 @@ export class TransaccionesComponent {
     return transaccion.estadoTransaccion === EstadoTransaccion.SOLICITAR
       && transaccion.vendedor_id !== null
       && transaccion.vendedor_id === this.vendedorId();
+  }
+
+  // Visita con vendedor asignado o reserva/seña: la puede editar el administrador o el vendedor a cargo
+  protected puedeEditar(transaccion: Transaccion): boolean {
+    const esReservaOSenia = transaccion.estadoTransaccion === EstadoTransaccion.RESERVA
+      || transaccion.estadoTransaccion === EstadoTransaccion.SENIADO;
+    const esVisitaAsignada = transaccion.estadoTransaccion === EstadoTransaccion.SOLICITAR
+      && transaccion.vendedor_id !== null;
+    if (!esReservaOSenia && !esVisitaAsignada) return false;
+    return this.esAdministrador() || transaccion.vendedor_id === this.vendedorId();
+  }
+
+  // El administrador puede dar de baja cualquier solicitud o visita pendiente
+  protected administradorPuedeCancelarSolicitud(transaccion: Transaccion): boolean {
+    return this.esAdministrador() && transaccion.estadoTransaccion === EstadoTransaccion.SOLICITAR;
   }
 
   protected contactoCliente(transaccion: Transaccion): string {

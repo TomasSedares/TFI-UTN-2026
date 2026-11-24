@@ -3,7 +3,7 @@ import { inject, Injectable, Service } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Pagina } from '../models/Vehiculo';
 import { TRANSACCIONES_URL } from './api_config';
-import { ActualizarTransaccion, AsignarVisita, BalanceTransacciones, ComisionVendedor, CrearTransaccion, FiltrosTransaccion, PagoRequest, SolicitarTransaccion, Transaccion } from '../models/Transacciones';
+import { ActualizarTransaccion, AsignarVisita, BalanceTransacciones, ComisionVendedor, CrearTransaccion, EditarTransaccion, FiltrosTransaccion, PagoRequest, SolicitarTransaccion, Transaccion } from '../models/Transacciones';
 
 
 @Service()
@@ -40,6 +40,10 @@ export class TransaccionService {
 
   asignar(id: number, datos: AsignarVisita): Observable<Transaccion> {
     return this.http.patch<Transaccion>(`${TRANSACCIONES_URL}/${id}/asignar`, datos);
+  }
+
+  editar(id: number, datos: EditarTransaccion): Observable<Transaccion> {
+    return this.http.patch<Transaccion>(`${TRANSACCIONES_URL}/${id}/editar`, datos);
   }
 
   senar(id: number, pagos: PagoRequest[]): Observable<Transaccion> {

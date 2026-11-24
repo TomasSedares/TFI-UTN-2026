@@ -12,6 +12,8 @@ export type EstadoReserva = EstadoTransaccion.RESERVA | EstadoTransaccion.SENIAD
 export interface DatosReserva {
   metodoPago: MetodoPago;
   estadoTransaccion: EstadoReserva;
+  // true cuando el vendedor quiere dejar registrada la seña enseguida de reservar
+  senarAhora: boolean;
 }
 
 @Component({
@@ -28,8 +30,8 @@ export class RegistrarReservaDialogComponent {
   protected readonly precioVehiculo = this.transaccion.precio_vehiculo;
   protected metodoPago: MetodoPago = this.transaccion.metodoPago ?? MetodoPago.EFECTIVO;
 
-  protected confirmar(): void {
-    this.dialogRef.close({ metodoPago: this.metodoPago, estadoTransaccion: EstadoTransaccion.RESERVA });
+  protected confirmar(senarAhora: boolean): void {
+    this.dialogRef.close({ metodoPago: this.metodoPago, estadoTransaccion: EstadoTransaccion.RESERVA, senarAhora });
   }
 
   protected cerrar(): void {

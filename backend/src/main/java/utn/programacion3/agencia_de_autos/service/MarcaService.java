@@ -7,6 +7,8 @@ import utn.programacion3.agencia_de_autos.dto.request.MarcaRequestDTO;
 import utn.programacion3.agencia_de_autos.dto.response.MarcaResponseDTO;
 import utn.programacion3.agencia_de_autos.mapper.MarcaMapper;
 import utn.programacion3.agencia_de_autos.model.Marca;
+import utn.programacion3.agencia_de_autos.model.Modelo;
+import utn.programacion3.agencia_de_autos.repository.ModeloRepository;
 import utn.programacion3.agencia_de_autos.repository.MarcaRepository;
 
 import java.util.List;
@@ -17,6 +19,7 @@ public class MarcaService {
 
     private final MarcaRepository marcaRepository;
     private final MarcaMapper marcaMapper;
+    private final ModeloRepository modeloRepository;
 
     // Crear una nueva marca
     public MarcaResponseDTO crearMarca(MarcaRequestDTO request) {
@@ -56,14 +59,23 @@ public class MarcaService {
     }
 
     // Actualizar marca
+    @Transactional
     public MarcaResponseDTO actualizarMarca(Long id, MarcaRequestDTO request) {
 
         Marca marca = marcaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
 
         marca.setNombre(request.getNombre());
+        boolean estabaActiva = Boolean.TRUE.equals(marca.getActivo());
         if(request.getActivo() != null){
             marca.setActivo(request.getActivo());
+        }
+
+        // Al desactivar una marca, todos sus modelos pasan a inactivos
+        if (estabaActiva && Boolean.FALSE.equals(marca.getActivo())) {
+            List<Modelo> modelosDeLaMarca = modeloRepository.findByMarcaId(marca.getId());
+            modelosDeLaMarca.forEach(modelo -> modelo.setActivo(false));
+            modeloRepository.saveAll(modelosDeLaMarca);
         }
 
         Marca marcaActualizada = marcaRepository.save(marca);

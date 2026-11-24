@@ -10,6 +10,8 @@ import java.util.Optional;
 @Repository
 public interface FavoritoRepository extends JpaRepository<Favorito, Long> {
 
+    void deleteByVehiculoId(Long vehiculoId);
+
     // Para saber si ya tiene ese vehiculo en favoritos
     Optional<Favorito> findByUsuarioAndVehiculo(Usuario usuario, Vehiculo vehiculo);
 

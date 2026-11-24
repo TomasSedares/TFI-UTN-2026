@@ -60,6 +60,11 @@ public class Vehiculo {
     @Column(nullable = false)
     private TipoTransmision tipoTransmision;
 
+    // Vehículo vendido que se repuso en venta como uno nuevo: se oculta de la gestión pero conserva su historial
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private Boolean archivado = false;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

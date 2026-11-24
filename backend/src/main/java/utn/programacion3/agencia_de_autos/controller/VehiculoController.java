@@ -52,6 +52,23 @@ public class VehiculoController {
     }
 
 
+    @Operation(summary = "Volver a poner en venta un vehículo vendido",
+            description = "Crea un vehículo nuevo con los datos enviados y archiva el vehículo vendido original.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Vehículo puesto nuevamente en venta"),
+            @ApiResponse(responseCode = "400", description = "El vehículo no está vendido o los datos son inválidos"),
+            @ApiResponse(responseCode = "404", description = "Vehículo no encontrado")
+    })
+    @PostMapping("/{id}/reponer")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('VENDEDOR','ADMINISTRADOR')")
+    public VehiculoResponseDTO reponerEnVenta(
+            @PathVariable Long id,
+            @Valid @RequestBody VehiculoRequestDTO request) {
+
+        return vehiculoService.reponerEnVenta(id, request);
+    }
+
     @Operation(summary = "Buscar vehículos aplicando filtros")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Búsqueda realizada correctamente")
