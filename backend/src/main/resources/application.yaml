@@ -29,6 +29,22 @@ spring:
     init:
       mode: always
 
+  # Correo saliente (Gmail por defecto). Sin MAIL_USERNAME/MAIL_PASSWORD el sistema funciona pero no envía correos
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: agencia.de.autos.tfi.2026@gmail.com
+    password: 
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+agencia:
+  sucursal: ${AGENCIA_SUCURSAL:nuestra sucursal}
+
 logging:
   level:
     org.hibernate.SQL: debug

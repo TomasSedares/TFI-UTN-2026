@@ -54,6 +54,7 @@ public class TransaccionService {
     private final VehiculoServiceImpl vehiculoService;
     private final AuditoriaTransaccionService auditoriaTransaccionService;
     private final PagoTransaccionRepository pagoTransaccionRepository;
+    private final EmailService emailService;
 
     // Reglas de negocio de visitas y reservas
     public static final int MAXIMO_VISITAS_POR_SEMANA = 3;
@@ -161,6 +162,9 @@ public class TransaccionService {
             throw new NegocioException("La visita no puede agendarse con más de "
                     + DIAS_MAXIMOS_HASTA_LA_VISITA + " días de anticipación");
 
+        // Si ya tenía fecha de visita, el aviso al cliente es una reprogramación
+        boolean esReprogramacion = transaccion.getFecha_visita() != null;
+
         // Solo la primera asignación cuenta para el límite semanal; reprogramar no suma
         if (transaccion.getVendedor() == null) {
             LocalDateTime inicioDeSemana = LocalDate.now()
@@ -180,7 +184,28 @@ public class TransaccionService {
 
         auditoriaTransaccionService.registrarCambio(snapshotAnterior, transaccion);
 
-        return aRespuesta(transaccionRepository.save(transaccion));
+        Transaccion transaccionGuardada = transaccionRepository.save(transaccion);
+        avisarVisitaAlCliente(transaccionGuardada, esReprogramacion);
+        return aRespuesta(transaccionGuardada);
+    }
+
+    // Arma los datos como texto simple (el envío corre en otro hilo) y manda el correo al cliente
+    private void avisarVisitaAlCliente(Transaccion transaccion, boolean esReprogramacion) {
+        if (transaccion.getFecha_visita() == null || transaccion.getCliente() == null) return;
+
+        Vehiculo vehiculo = transaccion.getVehiculo();
+        String descripcionVehiculo = vehiculo.getModelo().getMarca().getNombre() + " "
+                + vehiculo.getModelo().getNombre() + " " + vehiculo.getAnio();
+        Usuario cliente = transaccion.getCliente();
+        Usuario vendedor = transaccion.getVendedor();
+
+        emailService.enviarConfirmacionDeVisita(
+                cliente.getEmail(),
+                cliente.getNombre(),
+                vendedor.getNombre() + " " + vendedor.getApellido(),
+                descripcionVehiculo,
+                transaccion.getFecha_visita(),
+                esReprogramacion);
     }
 
     @Transactional
